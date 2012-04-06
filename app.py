@@ -6,10 +6,6 @@ FB_APP_ID = '407078449305300'
 FB_APP_SECRET = '8e4fcedc28a2705b8183b42bd5fe81c0'
 FB_DUMMY_REDIRECT = 'http%3A%2F%2Flocalhost%2F'
 
-#global stores:
-# open sessions
-user_id, session token, 
-
 def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
 
