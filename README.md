@@ -22,7 +22,7 @@ Service Architecture
 
 ### Overview 
 
-A user connects obtains a token for each of three tiers to use the service.
+A user obtains a token from each of three tiers to use the service.
 
 - Device ('device_token')
 - Sign-on ('service_token')
