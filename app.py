@@ -5,8 +5,8 @@ import os, requests, urlparse, json, time, md5
 app = Flask(__name__)
 
 MONGODB = 'staging'
-MONGODB_HOST = urlparse(os.environ['MONGOLAB_URI']).geturl()
-MONGODB_PORT = urlparse(os.environ['MONGOLAB_URI']).port
+MONGODB_HOST = urlparse.urlparse(os.environ['MONGOLAB_URI']).geturl()
+MONGODB_PORT = urlparse.urlparse(os.environ['MONGOLAB_URI']).port
 
 RDV_TIMEOUT = 1440 * 14  # token valid for two weeks
 CALL_RINGTIME = 30
