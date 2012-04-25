@@ -19,7 +19,8 @@ class Call(Document):
         'source_user': int,
         'target_user': int,
         'expires': int,
-        'authorized': bool
+        'received': bool,
+        'complete': bool
         }    
     validators = {
         }
