@@ -26,7 +26,7 @@ def find_my_session(token):
 
 def find_target_session(id):
     target_sessions = connection[MONGODB].sessions.Session.find({'id': id})
-    if not target_sessions: 
+    if not target_sessions:
         return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
     #target_sessions.sort(key=lambda d: d['expires'], reverse=True)
     for t in target_sessions:
@@ -36,17 +36,17 @@ def find_target_session(id):
 @app.route('/login', methods=['POST'])
 def login():
     try:
-        
+
         #TODO validate device ID with Apple servers, to avoid session invalidation DoS
         dev_type = 'iphone'
         dev_id = request.form['device_token']
 
         rendezvous_token = md5.new(time.time())
-        rendezvous_token.update(rendezvous_id)            
+        rendezvous_token.update(rendezvous_id)
         rendezvous_token = rendezvous_token.hexdigest()
 
         if request.form['service'] == 'fbook':
-            fb_req = requests.get('https://graph.facebook.com/me?access_token=%s' % 
+            fb_req = requests.get('https://graph.facebook.com/me?access_token=%s' %
                                   request.form['service_token'])
             if fb_req.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'auth'})
@@ -81,9 +81,9 @@ def discover(id):
     try:
         source = find_my_session(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        
+
         if request.form['service'] == 'fbook':
-            r = requests.get('https://graph.facebook.com/%i/friends' % id + 
+            r = requests.get('https://graph.facebook.com/%i/friends' % id +
                              '?access_token=' + request.form['service_token'] +
                              '?format=json')
             if r.status_code != 200:
@@ -93,13 +93,13 @@ def discover(id):
             for friend in json.loads(r.text)['data']:
                 friend_record = connection[MONGODB].sessions.Session.find_one(
                     {'id': 'fbook%s' % service_id})
-                if friend_record and friend_record['expires'] > int(time.time): 
-                    friends.append({'name': friend['name'], 'id': friend['id'], 
+                if friend_record and friend_record['expires'] > int(time.time):
+                    friends.append({'name': friend['name'], 'id': friend['id'],
                     'expires': friend_record['expires']})
                 else:
-                    friends.append({'name': friend['name'], 'id': friend['id'], 
+                    friends.append({'name': friend['name'], 'id': friend['id'],
                     'expires': TIME_EXPIRED})
-                    
+
         else: raise KeyError
 
         return json.dumps({'status': 'success', 'data': friends})
@@ -114,13 +114,13 @@ def call_init(id):
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
         target = find_target_session(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
-        
+
         connection[MONGODB].calls.Call.find_and_modify(
             {'source_user': source['id'], 'target_user': target['id']},
-            {'$set': {'complete': True}})  
+            {'$set': {'complete': True}})
         connection[MONGODB].calls.Call.find_and_modify(
             {'source_user': target['id'], 'target_user': source['id']},
-            {'$set': {'complete': True}})        
+            {'$set': {'complete': True}})
         connection[MONGODB].calls.Call({
             'source_user': 0,
             'target_user': id,
@@ -128,10 +128,10 @@ def call_init(id):
             'received': False,
             'complete': False
         }).save()
-        
+
         return json.dumps({'status': 'success'})
-        
-    except KeyError: pass    
+
+    except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<int:id>/poll')
@@ -141,7 +141,7 @@ def call_poll(id):
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
         target = find_target_session(id)
         if not target: raise KeyError
-        
+
         calls_out = connection[MONGODB].calls.Call.find(
             {'source_user': source['id'], 'target_user': target['id']})
         calls_in = connection[MONGODB].calls.Call.find_and_update(
@@ -154,13 +154,13 @@ def call_poll(id):
         calls.sort(key=lambda d: d['expires'], reverse=True)
         call = calls[-1]
 
-        if call['complete'] or call['expires'] > int(time.time): 
+        if call['complete'] or call['expires'] > int(time.time):
             return json.dumps({'status': 'success', 'call': 'disconnected'})
-        if not call['received']: 
+        if not call['received']:
             return json.dumps({'status': 'success', 'call': 'waiting'})
         return json.dumps({'status': 'success', 'call': 'connected'})
-    
-    except KeyError: pass    
+
+    except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/incoming')
@@ -168,19 +168,19 @@ def incoming():
     try:
         source = find_my_session(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        
+
         calls = [c for c in connection[MONGODB].calls.Call.find_and_update(
-                  {'target_user': source['id'], 'received': False}) 
+                  {'target_user': source['id'], 'received': False})
                  if c['expires'] > int(time.time)]
-                 
+
         return json.dumps({'status': 'success', 'calls': calls})
-        
-    except KeyError: pass    
+
+    except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/')
 def hello():
-    return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' + 
+    return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' +
            'font-weight: 100; text-align: center; margin: 20px 0;">Rendezvous</div>')
 
 if __name__ == "__main__":

@@ -21,13 +21,13 @@ class Call(Document):
         'expires': int,
         'received': bool,
         'complete': bool
-        }    
+        }
     validators = {
         }
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Call from %i to %i at %i>' % (self.source_user, 
+        return '<Call from %i to %i at %i>' % (self.source_user,
                                                self.target_user, self.expires)
 
 class Location(Document):
