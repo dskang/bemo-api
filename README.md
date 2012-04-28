@@ -59,7 +59,7 @@ Sign in or register using an OAuth single sign-on service. The server checks you
 	Content: {device: 'iphone', device_token: str,
 	          service: 'fbook', service_token: str}
 
-	Returns {status: 'success', id: int, session: str, newuser: boolean}
+	Returns {status: 'success', your_id: int, your_session_token: str, is_newuser: boolean}
 	Returns {status: 'failure', error: 'auth'} if OAuth fails
 
 Discover friends of a user.
@@ -83,8 +83,8 @@ Initiate a location call.
 
 Poll for a location. (In case of failure to open a socket.)
 
-	GET /call/:id/poll
-	Params: str uuid, int id, str token
+	GET /call/:target_id/poll
+	Params: int id, str token
 
 	Returns {status: 'waiting'} if the other user has not responded to the call
 	Returns {status: 'success', latitude: float, longitude: float} if the other user has accepted the call
@@ -94,7 +94,7 @@ Poll for a location. (In case of failure to open a socket.)
 Poll for incoming calls. (In case of failure to open a socket.)
 
 	GET /incoming
-	Params: str uuid, int id, str token
+	Params: int id, str token
 
 	Returns {status: 'success', data: null} if no calls
 	Returns {status: 'success', data: [ {source_id: int, expires: int} ]} if there are incoming calls
