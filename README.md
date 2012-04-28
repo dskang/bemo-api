@@ -1,5 +1,5 @@
 
-Backend Architecture 
+Backend Architecture
 ====================
 
 Contact: [Raymond](raymondz@princeton.edu) is responsible for this document.
@@ -7,7 +7,7 @@ Contact: [Raymond](raymondz@princeton.edu) is responsible for this document.
 App ID/API Key
 
     407078449305300
-    
+
 App Secret
 
     8e4fcedc28a2705b8183b42bd5fe81c0
@@ -20,7 +20,7 @@ App Namespace
 Service Architecture
 --------------------
 
-### Overview 
+### Overview
 
 A user obtains a token from each of three tiers to use the service.
 
@@ -73,8 +73,8 @@ Discover friends of a user.
 Initiate a location call.
 
 	POST /call/:id/init
-	Content: {device: 'iphone', device_token: str, 
-             target	          
+	Content: {device: 'iphone', device_token: str,
+             target
 	          id: int, token: str, target_id: int}
 
 	Returns {status: 'success'} if request successfully placed
@@ -112,7 +112,7 @@ Sessions
 Calls
 
     int source_user, int target_user, int expires, bool authorized
-    
+
 Locations
 
     char device, char device_token, double lat, double lon
