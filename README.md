@@ -55,50 +55,48 @@ Data sent to the server by GET is encoded in a query string. Data sent with POST
 
 Sign in or register using an OAuth single sign-on service. The server checks your OAuth token. You get a Rendezvous user ID and a session token valid for two weeks. We only support Facebook right now.
 
-	POST /login
-	Content: {device: 'iphone', device_token: str,
-	          service: 'fbook', service_token: str}
+    POST /login
+    Content: {device: 'iphone', device_token: str,
+              service: 'fb', service_token: str}
 
-	Returns {status: 'success', your_id: int, your_session_token: str, is_newuser: boolean}
-	Returns {status: 'failure', error: 'auth'} if OAuth fails
+    Returns {status: 'success', your_id: int, your_session_token: str, is_newuser: boolean}
+    Returns {status: 'failure', error: 'auth'} if OAuth fails
 
 Discover friends of a user.
 
-	POST /users/:id/friends
-	Content: {service: 'fbook', service_token: str}
+    GET /users/:id/friends?service=SERVICE&service_token=SERVICE_TOKEN
 
-	Returns {status: 'success', data: [ {name: str, id: int} ]}
-	Returns {status: 'failure', error: 'service'} if request to service fails
+    Returns {status: 'success', data: [ {name: str, id: int} ]}
+    Returns {status: 'failure', error: 'service'} if request to service fails
 
 Initiate a location call.
 
-	POST /call/:id/init
-	Content: {device: 'iphone', device_token: str,
-             target
-	          id: int, token: str, target_id: int}
+    POST /call/:id/init
+    Content: {device: 'iphone', device_token: str,
+              id: int, token: str, target_id: int}
 
-	Returns {status: 'success'} if request successfully placed
-	Returns {status: 'failure', error: 'offline'} if other user is not logged in
-	Returns {status: 'failure', error: 'auth'} if not authorized
+    Returns {status: 'success'} if request successfully placed
+    Returns {status: 'failure', error: 'offline'} if other user is not logged in
+    Returns {status: 'failure', error: 'auth'} if not authorized
 
 Poll for a location. (In case of failure to open a socket.)
 
-	GET /call/:target_id/poll
-	Params: int id, str token
+    GET /call/:target_id/poll
+    Params: int id, str token
 
-	Returns {status: 'waiting'} if the other user has not responded to the call
-	Returns {status: 'success', latitude: float, longitude: float} if the other user has accepted the call
-	Returns {status: 'disconnected'} at most once if the other user has disconnected or timed out
-	Returns {status: 'failure'} if the target is invalid
+    Returns {status: 'waiting'} if the other user has not responded to the call
+    Returns {status: 'success', latitude: float, longitude: float} if the other user has accepted the call
+    Returns {status: 'disconnected'} at most once if the other user has disconnected or timed out
+    Returns {status: 'failure'} if the target is invalid
 
 Poll for incoming calls. (In case of failure to open a socket.)
 
-	GET /incoming
-	Params: int id, str token
+    GET /incoming
+    Params: int id, str token
 
-	Returns {status: 'success', data: null} if no calls
-	Returns {status: 'success', data: [ {source_id: int, expires: int} ]} if there are incoming calls
-	Returns {status: 'failure', error: 'auth'} if not authorized
+    Returns {status: 'success', data: null} if no calls
+    Returns {status: 'success', data: [ {source_id: int, expires: int} ]} if there are incoming calls
+    Returns {status: 'failure', error: 'auth'} if not authorized
 
 Database
 --------
@@ -122,13 +120,13 @@ Trivia
 
 Run the server:
 
-	source ./server-env/bin/activate
-	python app.py
+    source ./server-env/bin/activate
+    python app.py
 
 
 Deploy to Heroku.
 
-	git add .
-	git commit
-	git push heroku
-	heroku open
+    git add .
+    git commit
+    git push heroku
+    heroku open

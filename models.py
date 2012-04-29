@@ -7,7 +7,8 @@ class Session(Document):
         'device': unicode,
         'device_id': unicode,
         'service': unicode,
-        'service_id': unicode
+        'service_id': unicode,
+        'service_token': unicode
         }
     validators = {
         }

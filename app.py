@@ -15,7 +15,7 @@ CALL_RINGTIME = 30
 CALL_LINETIME = 30 * 60
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
-FB_SERVICE_ID = 'fbook'
+FB_SERVICE_ID = 'fb'
 FB_APP_ID = '407078449305300'
 FB_APP_SECRET = '8e4fcedc28a2705b8183b42bd5fe81c0'
 
@@ -38,6 +38,7 @@ def find_session_by_id(id):
 
 @app.route('/login', methods=['POST'])
 def login():
+    """Create a session for the user and return an app token"""
     try:
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
@@ -48,12 +49,12 @@ def login():
 
         # Make sure we accept the service
         if service == FB_SERVICE_ID:
-            fb_req = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service_token))
-            if fb_req.status_code != 200:
+            r = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service_token))
+            if r.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'auth'})
             # Parse FB response
-            fb_params = json.loads(fb_req.text)
-            service_id = fb_params['id']
+            results = json.loads(r.text)
+            service_id = results['id']
         else: raise KeyError
 
         # Generate rendezvous token
@@ -68,13 +69,13 @@ def login():
 
         # Create new session
         database.sessions.Session({
-             '_id': unicode(service + service_id),
              'token': unicode(rendezvous_token),
              'expires': int(time.time()) + RDV_TIMEOUT,
              'device': unicode(dev_type),
              'device_id': unicode(dev_id),
              'service': unicode(service),
-             'service_id': unicode(service_id)
+             'service_id': unicode(service_id),
+             'service_token': unicode(service_token)
         }).save()
 
         return json.dumps({'status': 'success', 'session': rendezvous_token})
@@ -82,23 +83,29 @@ def login():
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
-@app.route('/users/<int:id>/friends', methods=['POST'])
+@app.route('/users/<int:id>/friends', methods=['GET'])
 def discover(id):
+    """Return the list of friends for the user with id"""
     try:
-        source = find_session_by_token(request.form['token'])
+        service = request.json['service']
+        service_token = request.json['service_token']
+
+        source = find_session_by_token(service_token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        if request.form['service'] == FB_SERVICE_ID:
-            r = requests.get('https://graph.facebook.com/%i/friends' % id +
-                             '?access_token=' + request.form['service_token'] +
-                             '?format=json')
+        if service == FB_SERVICE_ID:
+            r = requests.get('https://graph.facebook.com/{0}/friends?access_token={1}'.format(id, service_token))
             if r.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'service'})
 
+            results = json.loads(r.text)
             friends = []
-            for friend in json.loads(r.text)['data']:
+            for friend in results['data']:
+                # Search for friend in database
+                friend_id = friend['id']
+                friend_name = friend['name']
                 friend_record = database.sessions.Session.find_one(
-                    {'id': 'fbook%s' % service_id})
+                    {'id': 'fb{0}'.format(friend_id)})
                 if friend_record and friend_record['expires'] > int(time.time()):
                     friends.append({'name': friend['name'], 'id': friend['id'],
                     'expires': friend_record['expires']})
