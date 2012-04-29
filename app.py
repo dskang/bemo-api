@@ -17,11 +17,10 @@ TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'fb'
 
-def find_session_by_token(token):
-    """Return session for given app token"""
-    session = database.sessions.Session.find_one({'token': token})
-    if session and int(time.time()) < session['expires']: return session
-    return None
+def find_user_by_token(token):
+    """Return user for given app token"""
+    user = database.sessions.Session.find_one({'token': token})
+    return user
 
 def find_session_by_id(id):
     """Return session for given id"""
@@ -98,7 +97,7 @@ def discover():
     try:
         token = request.args['token']
 
-        session = find_session_by_token(token)
+        session = find_user_by_token(token)
         if not session: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         service = session.service
@@ -135,7 +134,7 @@ def discover():
 @app.route('/call/<int:id>/init')
 def call_init(id):
     try:
-        source = find_session_by_token(request.form['token'])
+        source = find_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
         target = find_session_by_id(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
@@ -162,7 +161,7 @@ def call_init(id):
 @app.route('/call/<int:id>/poll')
 def call_poll(id):
     try:
-        source = find_session_by_token(request.form['token'])
+        source = find_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
         target = find_session_by_id(id)
         if not target: raise KeyError
@@ -191,7 +190,7 @@ def call_poll(id):
 @app.route('/incoming')
 def incoming():
     try:
-        source = find_session_by_token(request.form['token'])
+        source = find_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         calls = [c for c in database.calls.Call.find_and_update(
