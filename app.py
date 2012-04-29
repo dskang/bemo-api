@@ -16,8 +16,6 @@ CALL_LINETIME = 30 * 60
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'fb'
-FB_APP_ID = '407078449305300'
-FB_APP_SECRET = '8e4fcedc28a2705b8183b42bd5fe81c0'
 
 def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
