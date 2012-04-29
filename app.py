@@ -2,6 +2,8 @@ from flask import Flask, request
 from mongokit import Connection
 from models import Session, Call, Location
 import os, requests, urlparse, json, time, md5
+
+app.debug = True
 app = Flask(__name__)
 
 DATABASE = 'staging'
