@@ -17,9 +17,6 @@ TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'fb'
 
-def querystr_to_dict(q):
-    return dict([part.split('=') for part in q.split('&')])
-
 def find_session_by_token(token):
     """Return session for given token"""
     sess = database.sessions.Session.find_one({'token': token})
