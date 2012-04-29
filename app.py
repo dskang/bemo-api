@@ -1,6 +1,6 @@
 from flask import Flask, request
 from mongokit import Connection
-from models import Session, Call, Location
+from models import User, Call, Location
 import os, requests, urlparse, json, time, md5
 
 app = Flask(__name__)
@@ -18,9 +18,9 @@ TIME_EXPIRED = 999999999999 # epoch time for expiring records
 FB_SERVICE_ID = 'fb'
 
 def find_session_by_token(token):
-    """Return session for given token"""
-    sess = database.sessions.Session.find_one({'token': token})
-    if sess and int(time.time()) < sess['expires']: return sess
+    """Return session for given app token"""
+    session = database.sessions.Session.find_one({'token': token})
+    if session and int(time.time()) < session['expires']: return session
     return None
 
 def find_session_by_id(id):
@@ -39,43 +39,55 @@ def login():
     try:
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
-        dev_type = request.json['device'];
-        dev_id = request.json['device_token']
-        service = request.json['service']
-        service_token = request.json['service_token']
+        device = {
+            'type': unicode(request.json['device']),
+            'id': unicode(request.json['device_token'])
+            }
+        service = {
+            'name': unicode(request.json['service']),
+            'token': unicode(request.json['service_token'])
+            }
 
         # Make sure we accept the service
-        if service == FB_SERVICE_ID:
-            r = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service_token))
+        if service['name'] == FB_SERVICE_ID:
+            r = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service['token']))
             if r.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'auth'})
             # Parse FB response
             results = json.loads(r.text)
-            service_id = results['id']
+            service['id'] = unicode(results['id'])
         else: raise KeyError
 
-        # Generate rendezvous token
-        rendezvous_token = md5.new(str(time.time()))
-        rendezvous_token.update(service_id)
-        rendezvous_token = rendezvous_token.hexdigest()
+        # Check if user exists in database
+        user = database.users.User.find_one({
+                'devices.type': device['type'],
+                'devices.id': device['id']
+             })
 
-        # Invalidate previous sessions
-        database.sessions.find_and_modify(
-            {'service': unicode(service), 'service_id': unicode(service_id)},
-            {'$set': {'expires': TIME_EXPIRED}})
+        if user:
+            app_token = user.token
+            # Add service if not already there
+            exists = False
+            for s in user.services:
+                if s['name'] == service['name']:
+                    exists = True
+                    break
+            if not exists:
+                user.services.append(service)
+        else:
+            # Generate app token
+            app_token = md5.new(str(time.time()))
+            app_token.update(service['id'])
+            app_token = unicode(app_token.hexdigest())
 
-        # Create new session
-        database.sessions.Session({
-             'token': unicode(rendezvous_token),
-             'expires': int(time.time()) + RDV_TIMEOUT,
-             'device': unicode(dev_type),
-             'device_id': unicode(dev_id),
-             'service': unicode(service),
-             'service_id': unicode(service_id),
-             'service_token': unicode(service_token)
-        }).save()
+            # Add user to database
+            user = database.users.User()
+            user.token = app_token
+            user.devices.append(device)
+            user.services.append(service)
+            user.save()
 
-        return json.dumps({'status': 'success', 'session': rendezvous_token})
+        return json.dumps({'status': 'success', 'token': app_token})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
@@ -97,14 +109,15 @@ def discover():
             if r.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'service'})
 
+            # Filter friends to app users
             results = json.loads(r.text)
             friends = []
             for friend in results['data']:
-                # Search for friend in database
                 friend_id = friend['id']
                 friend_name = friend['name']
                 friend_record = database.sessions.Session.find_one(
-                    {'id': 'fb{0}'.format(friend_id)})
+                    {'service': unicode(service),
+                     'service_id': unicode(friend_id)})
                 if friend_record and friend_record['expires'] > int(time.time()):
                     friends.append({'name': friend['name'], 'id': friend['id'],
                     'expires': friend_record['expires']})
@@ -199,7 +212,7 @@ if __name__ == "__main__":
     try:
         # Connect to database
         connection = Connection(MONGODB_HOST, MONGODB_PORT)
-        connection.register([Session, Call, Location])
+        connection.register([User, Call, Location])
         database = connection[DATABASE_NAME]
     except:
         print "Error: Unable to connect to database"

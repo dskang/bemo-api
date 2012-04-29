@@ -1,21 +1,26 @@
 from mongokit import Document
 
-class Session(Document):
+class User(Document):
     structure = {
         'token': unicode, # app token
-        'expires': int, # expiration of session
-        'device': unicode, # type of device
-        'device_id': unicode, # device id
-        'service': unicode, # service being used
-        'service_id': unicode, # user's id on service
-        'service_token': unicode # token used to access service
+        'devices': [{
+            'type': unicode, # device type
+            'id': unicode # device id
+            }],
+        'services': [{
+            'name': unicode, # service name
+            'id': unicode, # user's id on service
+            'token': unicode # user's access token for service
+            }]
         }
-    validators = {
-        }
+    required_fields = ['token']
+    default_values = {'devices': [], 'services': []}
+    validators = {}
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Session {0} expiring at {1}>'.format(self.token, self.expires)
+        return '<User {0} with token {1}>'.format(self._id,
+                                                  self.token)
 
 class Call(Document):
     structure = {
@@ -25,8 +30,7 @@ class Call(Document):
         'received': bool, # whether call has been connected
         'complete': bool # whether call is complete
         }
-    validators = {
-        }
+    validators = {}
 
     use_dot_notation = True
     def __repr__(self):
@@ -42,8 +46,7 @@ class Location(Document):
         'lon': float, # longitude
         'time': int # time location was recorded
         }
-    validators = {
-        }
+    validators = {}
 
     use_dot_notation = True
     def __repr__(self):

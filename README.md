@@ -59,7 +59,7 @@ Sign in or register using an OAuth single sign-on service. The server checks you
     Content: {device: 'iphone', device_token: str,
               service: 'fb', service_token: str}
 
-    Returns {status: 'success', your_id: int, your_session_token: str, is_newuser: boolean}
+    Returns {status: 'success', token: str}
     Returns {status: 'failure', error: 'auth'} if OAuth fails
 
 Discover friends of a user.
