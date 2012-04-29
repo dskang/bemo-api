@@ -5,9 +5,10 @@ import os, requests, urlparse, json, time, md5
 
 app = Flask(__name__)
 
-DATABASE = 'staging'
-MONGODB_HOST = urlparse.urlparse(os.environ['MONGOLAB_URI']).geturl()
-MONGODB_PORT = urlparse.urlparse(os.environ['MONGOLAB_URI']).port
+MONGOLAB_URI = os.environ['MONGOLAB_URI']
+MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
+MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
+DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
 RDV_TIMEOUT = 1440 * 14  # token valid for two weeks
 CALL_RINGTIME = 30
@@ -22,17 +23,17 @@ def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
 
 def find_session_by_token(token):
-    sess = connection[DATABASE].sessions.Session.find_one({'token': token})
-    if sess and int(time.time) < sess['expires']: return sess
+    sess = database.sessions.Session.find_one({'token': token})
+    if sess and int(time.time()) < sess['expires']: return sess
     return None
 
 def find_session_by_id(id):
-    target_sessions = connection[DATABASE].sessions.Session.find({'id': id})
+    target_sessions = database.sessions.Session.find({'id': id})
     if not target_sessions:
         return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
     #target_sessions.sort(key=lambda d: d['expires'], reverse=True)
     for t in target_sessions:
-        if t['expires'] > int(time.time): return t
+        if t['expires'] > int(time.time()): return t
     return None
 
 @app.route('/login', methods=['POST'])
@@ -61,15 +62,15 @@ def login():
         rendezvous_token = rendezvous_token.hexdigest()
 
         # Invalidate previous sessions
-        connection[DATABASE].sessions.find_and_modify(
+        database.sessions.find_and_modify(
             {'service': service, 'service_id': service_id},
             {'$set': {'expires': TIME_EXPIRED}})
 
         # Create new session
-        connection[DATABASE].sessions.Session({
+        database.sessions.Session({
              'id': '%s%s' % (service, service_id),
              'token': rendezvous_token,
-             'expires': int(time.time) + RDV_TIMEOUT,
+             'expires': int(time.time()) + RDV_TIMEOUT,
              'device': dev_type,
              'device_id': dev_id,
              'service': service,
@@ -98,9 +99,9 @@ def discover(id):
 
             friends = []
             for friend in json.loads(r.text)['data']:
-                friend_record = connection[DATABASE].sessions.Session.find_one(
+                friend_record = database.sessions.Session.find_one(
                     {'id': 'fbook%s' % service_id})
-                if friend_record and friend_record['expires'] > int(time.time):
+                if friend_record and friend_record['expires'] > int(time.time()):
                     friends.append({'name': friend['name'], 'id': friend['id'],
                     'expires': friend_record['expires']})
                 else:
@@ -122,16 +123,16 @@ def call_init(id):
         target = find_session_by_id(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
 
-        connection[DATABASE].calls.Call.find_and_modify(
+        database.calls.Call.find_and_modify(
             {'source_user': source['id'], 'target_user': target['id']},
             {'$set': {'complete': True}})
-        connection[DATABASE].calls.Call.find_and_modify(
+        database.calls.Call.find_and_modify(
             {'source_user': target['id'], 'target_user': source['id']},
             {'$set': {'complete': True}})
-        connection[DATABASE].calls.Call({
+        database.calls.Call({
             'source_user': 0,
             'target_user': id,
-            'expires': int(time.time) + CALL_RINGTIME,
+            'expires': int(time.time()) + CALL_RINGTIME,
             'received': False,
             'complete': False
         }).save()
@@ -149,9 +150,9 @@ def call_poll(id):
         target = find_session_by_id(id)
         if not target: raise KeyError
 
-        calls_out = connection[DATABASE].calls.Call.find(
+        calls_out = database.calls.Call.find(
             {'source_user': source['id'], 'target_user': target['id']})
-        calls_in = connection[DATABASE].calls.Call.find_and_update(
+        calls_in = database.calls.Call.find_and_update(
             {'source_user': target['id'], 'target_user': source['id']},
             {'received': True})
 
@@ -161,7 +162,7 @@ def call_poll(id):
         calls.sort(key=lambda d: d['expires'], reverse=True)
         call = calls[-1]
 
-        if call['complete'] or call['expires'] > int(time.time):
+        if call['complete'] or call['expires'] > int(time.time()):
             return json.dumps({'status': 'success', 'call': 'disconnected'})
         if not call['received']:
             return json.dumps({'status': 'success', 'call': 'waiting'})
@@ -176,9 +177,9 @@ def incoming():
         source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        calls = [c for c in connection[DATABASE].calls.Call.find_and_update(
+        calls = [c for c in database.calls.Call.find_and_update(
                   {'target_user': source['id'], 'received': False})
-                 if c['expires'] > int(time.time)]
+                 if c['expires'] > int(time.time())]
 
         return json.dumps({'status': 'success', 'calls': calls})
 
@@ -191,8 +192,15 @@ def hello():
            'font-weight: 100; text-align: center; margin: 20px 0;">Rendezvous</div>')
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    connection = Connection(MONGODB_HOST, MONGODB_PORT)
-    connection.register([Session, Call, Location])
+    try:
+        # Connect to database
+        connection = Connection(MONGODB_HOST, MONGODB_PORT)
+        connection.register([Session, Call, Location])
+        database = connection[DATABASE_NAME]
+    except:
+        print "Error: Unable to connect to database"
+
+    # Start the server
     app.debug = True
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
