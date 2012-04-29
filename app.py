@@ -39,7 +39,6 @@ def login():
     try:
         print "MEOW MEOW MEOW"
         print dir(request)
-        print request.form['device']
         print request.json['device']
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
