@@ -36,10 +36,11 @@ def find_session_by_id(id):
 
 @app.route('/login', methods=['POST'])
 def login():
-    print "MEOW MEOW MEOW"
-    print dir(request)
-    print request.form
     try:
+        print "MEOW MEOW MEOW"
+        print dir(request)
+        print request.form['device']
+        print request.json['device']
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
         dev_type = request.json['device'];
