@@ -2,13 +2,13 @@ from mongokit import Document
 
 class Session(Document):
     structure = {
-        'token': unicode,
-        'expires': int,
-        'device': unicode,
-        'device_id': unicode,
-        'service': unicode,
-        'service_id': unicode,
-        'service_token': unicode
+        'token': unicode, # app token
+        'expires': int, # expiration of session
+        'device': unicode, # type of device
+        'device_id': unicode, # device id
+        'service': unicode, # service being used
+        'service_id': unicode, # user's id on service
+        'service_token': unicode # token used to access service
         }
     validators = {
         }
@@ -19,11 +19,11 @@ class Session(Document):
 
 class Call(Document):
     structure = {
-        'source_user': int,
-        'target_user': int,
-        'expires': int,
-        'received': bool,
-        'complete': bool
+        'source_user': int, # user making call
+        'target_user': int, # user receiving call
+        'expires': int, # expiration of call
+        'received': bool, # whether call has been connected
+        'complete': bool # whether call is complete
         }
     validators = {
         }
@@ -36,11 +36,11 @@ class Call(Document):
 
 class Location(Document):
     structure = {
-        'device': unicode,
-        'device_id': unicode,
-        'lat': float,
-        'lon': float,
-        'time': int
+        'device': unicode, # type of device
+        'device_id': unicode, # device id
+        'lat': float, # latitude
+        'lon': float, # longitude
+        'time': int # time location was recorded
         }
     validators = {
         }
