@@ -4,7 +4,7 @@ from models import Session, Call, Location
 import os, requests, urlparse, json, time, md5
 app = Flask(__name__)
 
-MONGODB = 'staging'
+DATABASE = 'staging'
 MONGODB_HOST = urlparse.urlparse(os.environ['MONGOLAB_URI']).geturl()
 MONGODB_PORT = urlparse.urlparse(os.environ['MONGOLAB_URI']).port
 
@@ -20,12 +20,12 @@ def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
 
 def find_session_by_token(token):
-    sess = connection[MONGODB].sessions.Session.find_one({'token': token})
+    sess = connection[DATABASE].sessions.Session.find_one({'token': token})
     if sess and int(time.time) < sess['expires']: return sess
     return None
 
 def find_session_by_id(id):
-    target_sessions = connection[MONGODB].sessions.Session.find({'id': id})
+    target_sessions = connection[DATABASE].sessions.Session.find({'id': id})
     if not target_sessions:
         return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
     #target_sessions.sort(key=lambda d: d['expires'], reverse=True)
@@ -55,10 +55,10 @@ def login():
         else: raise KeyError
 
         # invalidate sessions
-        connection[MONGODB].sessions.Session.find_and_modify(
+        connection[DATABASE].sessions.Session.find_and_modify(
             {'service': request.form['service'], 'service_id': service_id},
             {'$set': {'expires': TIME_EXPIRED}})
-        connection[MONGODB].sessions.Session({
+        connection[DATABASE].sessions.Session({
              'id': '%s%s' % (request.form['service'], service_id),
              'token': rendezvous_token,
              'expires': int(time.time) + RDV_TIMEOUT,
@@ -90,7 +90,7 @@ def discover(id):
 
             friends = []
             for friend in json.loads(r.text)['data']:
-                friend_record = connection[MONGODB].sessions.Session.find_one(
+                friend_record = connection[DATABASE].sessions.Session.find_one(
                     {'id': 'fbook%s' % service_id})
                 if friend_record and friend_record['expires'] > int(time.time):
                     friends.append({'name': friend['name'], 'id': friend['id'],
@@ -114,13 +114,13 @@ def call_init(id):
         target = find_session_by_id(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
 
-        connection[MONGODB].calls.Call.find_and_modify(
+        connection[DATABASE].calls.Call.find_and_modify(
             {'source_user': source['id'], 'target_user': target['id']},
             {'$set': {'complete': True}})
-        connection[MONGODB].calls.Call.find_and_modify(
+        connection[DATABASE].calls.Call.find_and_modify(
             {'source_user': target['id'], 'target_user': source['id']},
             {'$set': {'complete': True}})
-        connection[MONGODB].calls.Call({
+        connection[DATABASE].calls.Call({
             'source_user': 0,
             'target_user': id,
             'expires': int(time.time) + CALL_RINGTIME,
@@ -141,9 +141,9 @@ def call_poll(id):
         target = find_session_by_id(id)
         if not target: raise KeyError
 
-        calls_out = connection[MONGODB].calls.Call.find(
+        calls_out = connection[DATABASE].calls.Call.find(
             {'source_user': source['id'], 'target_user': target['id']})
-        calls_in = connection[MONGODB].calls.Call.find_and_update(
+        calls_in = connection[DATABASE].calls.Call.find_and_update(
             {'source_user': target['id'], 'target_user': source['id']},
             {'received': True})
 
@@ -168,7 +168,7 @@ def incoming():
         source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        calls = [c for c in connection[MONGODB].calls.Call.find_and_update(
+        calls = [c for c in connection[DATABASE].calls.Call.find_and_update(
                   {'target_user': source['id'], 'received': False})
                  if c['expires'] > int(time.time)]
 
