@@ -63,23 +63,21 @@ def login():
 
         # Invalidate previous sessions
         database.sessions.find_and_modify(
-            {'service': service, 'service_id': service_id},
+            {'service': unicode(service), 'service_id': unicode(service_id)},
             {'$set': {'expires': TIME_EXPIRED}})
 
         # Create new session
         database.sessions.Session({
-             'id': '%s%s' % (service, service_id),
-             'token': rendezvous_token,
+             '_id': unicode(service + service_id),
+             'token': unicode(rendezvous_token),
              'expires': int(time.time()) + RDV_TIMEOUT,
-             'device': dev_type,
-             'device_id': dev_id,
-             'service': service,
-             'service_id': service_id
+             'device': unicode(dev_type),
+             'device_id': unicode(dev_id),
+             'service': unicode(service),
+             'service_id': unicode(service_id)
         }).save()
 
-        return json.dumps({'status': 'success',
-                           'session': rendezvous_token,
-                           })
+        return json.dumps({'status': 'success', 'session': rendezvous_token})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
