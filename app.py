@@ -56,7 +56,7 @@ def login():
         else: raise KeyError
 
         # Generate rendezvous token
-        rendezvous_token = md5.new(time.time())
+        rendezvous_token = md5.new(str(time.time()))
         rendezvous_token.update(service_id)
         rendezvous_token = rendezvous_token.hexdigest()
 
