@@ -37,6 +37,7 @@ def find_session_by_id(id):
 
 @app.route('/login', methods=['POST'])
 def login():
+    global connection
     try:
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
