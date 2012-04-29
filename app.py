@@ -22,21 +22,18 @@ def find_user_by_token(token):
     user = database.sessions.Session.find_one({'token': token})
     return user
 
-def find_session_by_id(id):
-    """Return session for given id"""
-    target_sessions = database.sessions.Session.find({'id': id})
-    if not target_sessions:
-        return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
-    #target_sessions.sort(key=lambda d: d['expires'], reverse=True)
-    for t in target_sessions:
-        if t['expires'] > int(time.time()): return t
-    return None
+def find_user_by_service(service_name, service_id):
+    """Return user for given service name and service id"""
+    user = database.sessions.Session.find_one({
+            'services.name': service_name,
+            'services.id': service_id
+            })
+    return user
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Create a session for the user and return an app token"""
+    """Update user information or create new user"""
     try:
-        # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
         device = {
             'type': unicode(request.json['device']),
@@ -136,7 +133,7 @@ def call_init(id):
     try:
         source = find_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_session_by_id(id)
+        target = find_user_by_service(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
 
         database.calls.Call.find_and_modify(
@@ -163,7 +160,7 @@ def call_poll(id):
     try:
         source = find_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_session_by_id(id)
+        target = find_user_by_service(id)
         if not target: raise KeyError
 
         calls_out = database.calls.Call.find(
