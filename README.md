@@ -57,7 +57,7 @@ Sign in or register using an OAuth single sign-on service. The server checks you
 
     POST /login
     Content: {device: 'iphone', device_token: str,
-              service: 'fb', service_token: str}
+              service: 'facebook', service_token: str}
 
     Returns {status: 'success', token: str}
     Returns {status: 'failure', error: 'auth'} if OAuth fails

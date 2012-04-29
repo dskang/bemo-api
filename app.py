@@ -15,7 +15,7 @@ CALL_RINGTIME = 30
 CALL_LINETIME = 30 * 60
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
-FB_SERVICE_ID = 'fb'
+FB_SERVICE_ID = 'facebook'
 
 def find_user_by_token(token):
     """Return user for given app token"""
