@@ -37,7 +37,6 @@ def find_session_by_id(id):
 
 @app.route('/login', methods=['POST'])
 def login():
-    global connection
     try:
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         # Read in request data
@@ -194,7 +193,7 @@ def hello():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.debug = True
-    app.run(host='0.0.0.0', port=port)
     connection = Connection(app.config['MONGODB_HOST'],
                             app.config['MONGODB_PORT'])
+    app.debug = True
+    app.run(host='0.0.0.0', port=port)
