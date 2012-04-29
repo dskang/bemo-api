@@ -4,15 +4,17 @@ class Session(Document):
     structure = {
         'token': unicode,
         'expires': int,
-        'device': unicode, 'device_id': unicode,
-        'service': unicode, 'service_id': unicode
+        'device': unicode,
+        'device_id': unicode,
+        'service': unicode,
+        'service_id': unicode
         }
     validators = {
         }
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Session %r expiring at %i>' % (self.user, self.expires)
+        return '<Session {0} expiring at {1}>'.format(self.token, self.expires)
 
 class Call(Document):
     structure = {
@@ -27,17 +29,21 @@ class Call(Document):
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Call from %i to %i at %i>' % (self.source_user,
-                                               self.target_user, self.expires)
+        return '<Call from {0} to {1} at {2}>'.format(self.source_user,
+                                                      self.target_user,
+                                                      self.expires)
 
 class Location(Document):
     structure = {
-        'device': unicode, 'device_id': unicode,
-        'lat': float, 'lon': float, 'time': int
+        'device': unicode,
+        'device_id': unicode,
+        'lat': float,
+        'lon': float,
+        'time': int
         }
     validators = {
         }
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Location of %r at %i>' & (self.device_token, self.time)
+        return '<Location of {0} at {1}>'.format(self.device_token, self.time)

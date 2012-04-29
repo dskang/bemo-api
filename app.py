@@ -53,7 +53,6 @@ def login():
             # Parse FB response
             fb_params = json.loads(fb_req.text)
             service_id = fb_params['id']
-            print "Service id: {0}".format(service_id) # FIXME
         else: raise KeyError
 
         # Generate rendezvous token
@@ -62,8 +61,9 @@ def login():
         rendezvous_token = rendezvous_token.hexdigest()
 
         # Invalidate previous sessions
-        connection[DATABASE].sessions.Session.find_and_modify(
-            {'service': request.form['service'], 'service_id': service_id},
+        connection[DATABASE].authenticate(USER, PASSWORD)
+        connection[DATABASE].sessions.find_and_modify(
+            {'service': service, 'service_id': service_id},
             {'$set': {'expires': TIME_EXPIRED}})
 
         # Create new session
@@ -194,5 +194,6 @@ def hello():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     connection = Connection(MONGODB_HOST, MONGODB_PORT)
+    connection.register([Session, Call, Location])
     app.debug = True
     app.run(host='0.0.0.0', port=port)
