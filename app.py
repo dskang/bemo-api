@@ -38,34 +38,41 @@ def find_session_by_id(id):
 def login():
     try:
         # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
-        dev_type = 'iphone'
-        dev_id = request.form['device_token']
+        # Read in request data
+        dev_type = request.json['device'];
+        dev_id = request.json['device_token']
+        service = request.json['service']
+        service_token = request.json['service_token']
 
-        rendezvous_token = md5.new(time.time())
-        rendezvous_token.update(rendezvous_id)
-        rendezvous_token = rendezvous_token.hexdigest()
-
-        if request.form['service'] == FB_SERVICE_ID:
-            fb_req = requests.get('https://graph.facebook.com/me?access_token=%s' %
-                                  request.form['service_token'])
+        # Make sure we accept the service
+        if service == FB_SERVICE_ID:
+            fb_req = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service_token))
             if fb_req.status_code != 200:
                 return json.dumps({'status': 'failure', 'error': 'auth'})
-            fb_params = querystr_to_dict(urlparse(fb_req.text).query)
+            # Parse FB response
+            fb_params = json.loads(fb_req.text)
             service_id = fb_params['id']
-
+            print "Service id: {0}".format(service_id) # FIXME
         else: raise KeyError
 
-        # invalidate sessions
+        # Generate rendezvous token
+        rendezvous_token = md5.new(time.time())
+        rendezvous_token.update(service_id)
+        rendezvous_token = rendezvous_token.hexdigest()
+
+        # Invalidate previous sessions
         connection[DATABASE].sessions.Session.find_and_modify(
             {'service': request.form['service'], 'service_id': service_id},
             {'$set': {'expires': TIME_EXPIRED}})
+
+        # Create new session
         connection[DATABASE].sessions.Session({
-             'id': '%s%s' % (request.form['service'], service_id),
+             'id': '%s%s' % (service, service_id),
              'token': rendezvous_token,
              'expires': int(time.time) + RDV_TIMEOUT,
              'device': dev_type,
              'device_id': dev_id,
-             'service': request.form['service'],
+             'service': service,
              'service_id': service_id
         }).save()
 
