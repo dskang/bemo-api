@@ -23,11 +23,13 @@ def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
 
 def find_session_by_token(token):
+    """Return session for given token"""
     sess = database.sessions.Session.find_one({'token': token})
     if sess and int(time.time()) < sess['expires']: return sess
     return None
 
 def find_session_by_id(id):
+    """Return session for given id"""
     target_sessions = database.sessions.Session.find({'id': id})
     if not target_sessions:
         return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
@@ -83,15 +85,17 @@ def login():
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
-@app.route('/users/<int:id>/friends', methods=['GET'])
-def discover(id):
-    """Return the list of friends for the user with id"""
+@app.route('/friends', methods=['GET'])
+def discover():
+    """Return the list of friends for the user with given token"""
     try:
-        service = request.json['service']
-        service_token = request.json['service_token']
+        token = request.args['token']
 
-        source = find_session_by_token(service_token)
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        session = find_session_by_token(token)
+        if not session: return json.dumps({'status': 'failure', 'error': 'auth'})
+
+        service = session.service
+        service_token = session.service_token
 
         if service == FB_SERVICE_ID:
             r = requests.get('https://graph.facebook.com/{0}/friends?access_token={1}'.format(id, service_token))

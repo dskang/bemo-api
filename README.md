@@ -64,7 +64,7 @@ Sign in or register using an OAuth single sign-on service. The server checks you
 
 Discover friends of a user.
 
-    GET /users/:id/friends?service=SERVICE&service_token=SERVICE_TOKEN
+    GET /friends?token=TOKEN
 
     Returns {status: 'success', data: [ {name: str, id: int} ]}
     Returns {status: 'failure', error: 'service'} if request to service fails
