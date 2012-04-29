@@ -3,7 +3,6 @@ from mongokit import Connection
 from models import Session, Call, Location
 import os, requests, urlparse, json, time, md5
 
-app.debug = True
 app = Flask(__name__)
 
 DATABASE = 'staging'
@@ -194,6 +193,7 @@ def hello():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    app.debug = True
     app.run(host='0.0.0.0', port=port)
     connection = Connection(app.config['MONGODB_HOST'],
                             app.config['MONGODB_PORT'])
