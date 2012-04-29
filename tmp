@@ -1,9 +1,0 @@
-
-        ''' Single sign-on with mobile CSRF protection; not used for iOS app
-        if request.form['service'] == 'fbmob':
-            fb_req = requests.get('https://graph.facebook.com/oauth/' +
-                                  'access_token?client_id=' + FB_APP_ID + 
-                                  '&redirect_uri=' + YOUR_REDIRECT_URI + 
-                                  '&client_secret=' + FB_APP_SECRET + 
-                                  '&code=' + request.form['service_token'])            
-                                  '''

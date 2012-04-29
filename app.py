@@ -19,12 +19,12 @@ FB_APP_SECRET = '8e4fcedc28a2705b8183b42bd5fe81c0'
 def querystr_to_dict(q):
     return dict([part.split('=') for part in q.split('&')])
 
-def find_my_session(token):
+def find_session_by_token(token):
     sess = connection[MONGODB].sessions.Session.find_one({'token': token})
     if sess and int(time.time) < sess['expires']: return sess
     return None
 
-def find_target_session(id):
+def find_session_by_id(id):
     target_sessions = connection[MONGODB].sessions.Session.find({'id': id})
     if not target_sessions:
         return json.dumps({'status': 'failure', 'error': 'invalid-recipient'})
@@ -79,7 +79,7 @@ def login():
 @app.route('/users/<int:id>/friends', methods=['POST'])
 def discover(id):
     try:
-        source = find_my_session(request.form['token'])
+        source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         if request.form['service'] == 'fbook':
@@ -110,9 +110,9 @@ def discover(id):
 @app.route('/call/<int:id>/init')
 def call_init(id):
     try:
-        source = find_my_session(request.form['token'])
+        source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_target_session(id)
+        target = find_session_by_id(id)
         if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
 
         connection[MONGODB].calls.Call.find_and_modify(
@@ -137,9 +137,9 @@ def call_init(id):
 @app.route('/call/<int:id>/poll')
 def call_poll(id):
     try:
-        source = find_my_session(request.form['token'])
+        source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_target_session(id)
+        target = find_session_by_id(id)
         if not target: raise KeyError
 
         calls_out = connection[MONGODB].calls.Call.find(
@@ -166,7 +166,7 @@ def call_poll(id):
 @app.route('/incoming')
 def incoming():
     try:
-        source = find_my_session(request.form['token'])
+        source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         calls = [c for c in connection[MONGODB].calls.Call.find_and_update(
