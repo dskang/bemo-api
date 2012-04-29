@@ -13,6 +13,7 @@ CALL_RINGTIME = 30
 CALL_LINETIME = 30 * 60
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
+FB_SERVICE_ID = 'fbook'
 FB_APP_ID = '407078449305300'
 FB_APP_SECRET = '8e4fcedc28a2705b8183b42bd5fe81c0'
 
@@ -44,7 +45,7 @@ def login():
         rendezvous_token.update(rendezvous_id)
         rendezvous_token = rendezvous_token.hexdigest()
 
-        if request.form['service'] == 'fbook':
+        if request.form['service'] == FB_SERVICE_ID:
             fb_req = requests.get('https://graph.facebook.com/me?access_token=%s' %
                                   request.form['service_token'])
             if fb_req.status_code != 200:
@@ -81,7 +82,7 @@ def discover(id):
         source = find_session_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        if request.form['service'] == 'fbook':
+        if request.form['service'] == FB_SERVICE_ID:
             r = requests.get('https://graph.facebook.com/%i/friends' % id +
                              '?access_token=' + request.form['service_token'] +
                              '?format=json')
