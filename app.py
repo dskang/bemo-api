@@ -19,12 +19,12 @@ FB_SERVICE_ID = 'fb'
 
 def find_user_by_token(token):
     """Return user for given app token"""
-    user = database.sessions.Session.find_one({'token': token})
+    user = database.users.User.find_one({'token': token})
     return user
 
 def find_user_by_service(service_name, service_id):
     """Return user for given service name and service id"""
-    user = database.sessions.Session.find_one({
+    user = database.users.User.find_one({
             'services.name': service_name,
             'services.id': service_id
             })
@@ -94,34 +94,23 @@ def discover():
     try:
         token = request.args['token']
 
-        session = find_user_by_token(token)
-        if not session: return json.dumps({'status': 'failure', 'error': 'auth'})
+        user = find_user_by_token(token)
+        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        service = session.service
-        service_token = session.service_token
-
-        if service == FB_SERVICE_ID:
-            r = requests.get('https://graph.facebook.com/{0}/friends?access_token={1}'.format(id, service_token))
-            if r.status_code != 200:
-                return json.dumps({'status': 'failure', 'error': 'service'})
-
-            # Filter friends to app users
-            results = json.loads(r.text)
-            friends = []
-            for friend in results['data']:
-                friend_id = friend['id']
-                friend_name = friend['name']
-                friend_record = database.sessions.Session.find_one(
-                    {'service': unicode(service),
-                     'service_id': unicode(friend_id)})
-                if friend_record and friend_record['expires'] > int(time.time()):
-                    friends.append({'name': friend['name'], 'id': friend['id'],
-                    'expires': friend_record['expires']})
-                else:
-                    friends.append({'name': friend['name'], 'id': friend['id'],
-                    'expires': TIME_EXPIRED})
-
-        else: raise KeyError
+        for service in user.services:
+            if service['name'] == FB_SERVICE_ID:
+                # Request friends list
+                r = requests.get('https://graph.facebook.com/{0}/friends?access_token={1}'.format(service['id'], service['token']))
+                if r.status_code != 200:
+                    return json.dumps({'status': 'failure', 'error': 'service'})
+                # Filter list to app users
+                result = json.loads(r.text)
+                friends = []
+                for friend in result['data']:
+                    print friend
+                    friend_account = find_user_by_service(service['name'], friend['id'])
+                    if friend_account:
+                        friends.append({'name': friend['name'], 'id': friend['id']})
 
         return json.dumps({'status': 'success', 'data': friends})
 
