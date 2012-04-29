@@ -61,7 +61,6 @@ def login():
         rendezvous_token = rendezvous_token.hexdigest()
 
         # Invalidate previous sessions
-        connection[DATABASE].authenticate(USER, PASSWORD)
         connection[DATABASE].sessions.find_and_modify(
             {'service': service, 'service_id': service_id},
             {'$set': {'expires': TIME_EXPIRED}})
