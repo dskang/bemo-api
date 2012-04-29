@@ -36,8 +36,7 @@ def find_session_by_id(id):
 @app.route('/login', methods=['POST'])
 def login():
     try:
-
-        #TODO validate device ID with Apple servers, to avoid session invalidation DoS
+        # TODO: validate device ID with Apple servers, to avoid session invalidation DoS
         dev_type = 'iphone'
         dev_id = request.form['device_token']
 
