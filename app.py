@@ -30,6 +30,11 @@ def find_user_by_service(service_name, service_id):
             })
     return user
 
+def find_user_by_id(id):
+    """Return user for given id"""
+    user = database.users.User.find_one({'_id': id})
+    return user
+
 @app.route('/login', methods=['POST'])
 def login():
     """Update user information or create new user"""
@@ -107,10 +112,10 @@ def discover():
                 result = json.loads(r.text)
                 friends = []
                 for friend in result['data']:
-                    print friend
                     friend_account = find_user_by_service(service['name'], friend['id'])
                     if friend_account:
-                        friends.append({'name': friend['name'], 'id': friend['id']})
+                        # Populate list with friend name and our app id
+                        friends.append({'name': friend['name'], 'id': friend_account._id})
 
         return json.dumps({'status': 'success', 'data': friends})
 
@@ -119,19 +124,17 @@ def discover():
 
 @app.route('/call/<target_id>/init', methods=['POST'])
 def call_init(target_id):
+    """Initiate the call"""
     try:
         # Parse request
         device_type = request.json['device']
         token = request.json['token']
-        service = request.json['service']
 
         # Determine source and target
         source = find_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_service(service, target_id)
+        target = find_user_by_id(target_id)
         if not target: raise KeyError
-
-        # TODO: Send push notification to target
 
         # Invalidate previous calls
         database.calls.find_and_modify(
@@ -152,17 +155,22 @@ def call_init(target_id):
         call.expires = int(time.time()) + CALL_RINGTIME
         call.save()
 
+        # TODO: Send push notification to target
+
         return json.dumps({'status': 'success'})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
-@app.route('/call/<int:id>/poll')
-def call_poll(id):
+@app.route('/call/<target_id>/poll')
+def call_poll(target_id):
     try:
-        source = find_user_by_token(request.form['token'])
+        token = request.args['token']
+
+        # Determine source and target
+        source = find_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_service(id)
+        target = find_user_by_id(target_id)
         if not target: raise KeyError
 
         calls_out = database.calls.Call.find(

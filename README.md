@@ -73,8 +73,7 @@ Initiate a location call.
 
     POST /call/:target_id/init
     Content: {device: 'iphone',
-              token: str,
-              target_service: str}
+              token: str}
 
     Returns {status: 'success'} if request successfully placed
     Returns {status: 'failure', error: 'offline'} if other user is not logged in
@@ -82,8 +81,7 @@ Initiate a location call.
 
 Poll for a location. (In case of failure to open a socket.)
 
-    GET /call/:target_id/poll
-    Params: int id, str token
+    GET /call/:target_id/poll?token=TOKEN
 
     Returns {status: 'waiting'} if the other user has not responded to the call
     Returns {status: 'success', latitude: float, longitude: float} if the other user has accepted the call
