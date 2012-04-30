@@ -106,8 +106,9 @@ Poll for a location.
 
     Returns {status: 'waiting'} if the other user has not responded to the call
     Returns {status: 'success', data: {latitude: float, longitude: float}} if the other user has accepted the call
-    Returns {status: 'disconnected'} at most once if the other user has disconnected or timed out
-    Returns {status: 'failure'} if the target is invalid
+    Returns {status: 'failure', error: 'disconnected'} at most once if the other user has disconnected or timed out
+    Returns {status: 'failure', error: 'receive call'} if there is a call to be received before polling
+    Returns {status: 'failure', error: 'invalid'} if the target is invalid
 
 Poll for incoming calls. (In case of failure to open a socket.)
 

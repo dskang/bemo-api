@@ -250,13 +250,15 @@ def call_poll(target_id):
         call_in = database.calls.Call.find_one(
             {'source_id': target._id,
              'target_id': source._id,
-             'connected': True, # should have received call before polling
              'complete': False})
         call_out = database.calls.Call.find_one(
             {'source_id': source._id,
              'target_id': target._id,
              'complete': False})
         if call_in:
+            # Make sure call has been received
+            if not call_in.connected:
+                return json.dumps({'status': 'failure', 'error': 'receive call'})
             call = call_in
             target_device = call_in.source_device
         elif call_out:
