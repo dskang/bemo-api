@@ -93,8 +93,8 @@ Update location.
 
     POST /location/update
     Content: {device: 'iphone',
-              lat: float,
-              lon: float,
+              latitude: float,
+              longitude: float,
               token: str}
 
     Returns {status: 'success'} if location successfully updated
@@ -105,7 +105,7 @@ Poll for a location.
     GET /call/:target_id/poll?token=TOKEN
 
     Returns {status: 'waiting'} if the other user has not responded to the call
-    Returns {status: 'success', latitude: float, longitude: float} if the other user has accepted the call
+    Returns {status: 'success', data: {latitude: float, longitude: float}} if the other user has accepted the call
     Returns {status: 'disconnected'} at most once if the other user has disconnected or timed out
     Returns {status: 'failure'} if the target is invalid
 

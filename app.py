@@ -177,8 +177,8 @@ def location_update():
     try:
         device = request.json['device']
         token = request.json['token']
-        lat = request.json['lat']
-        lon = request.json['lon']
+        lat = request.json['latitude']
+        lon = request.json['longitude']
 
         # Determine user
         user = find_user_by_token(token)
@@ -220,6 +220,7 @@ def call_receive(target_id):
         call_in = database.calls.find_one(
             {'source_id': target._id,
              'target_id': source._id,
+             'connected': False,
              'complete': False})
         if not call_in:
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
@@ -249,27 +250,18 @@ def call_poll(target_id):
         call_in = database.calls.find_one(
             {'source_id': target._id,
              'target_id': source._id,
+             'connected': True, # should have received call before polling
              'complete': False})
-        call_out = database.calls.Call.find_one(
+        call_out = database.calls.find_one(
             {'source_id': source._id,
              'target_id': target._id,
              'complete': False})
-
-        # Choose more recent call if simultaneous init
-        if call_in and call_out:
-            if call_in.expires > call_out.expires:
-                other = call_out
-                call = call_in
-            else:
-                other = call_in
-                call = call_out
-            # Complete older call
-            other.complete = True
-            other.save()
-        elif call_in:
+        if call_in:
             call = call_in
+            target_device = call_in.source_device
         elif call_out:
             call = call_out
+            target_device = call_out.target_device
         else:
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
@@ -278,21 +270,18 @@ def call_poll(target_id):
             call.complete = True
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
-        if call == call_in:
-            target_device = call_in.source_device
-            # Receive call if not already connected
-            if call_in.connected == False:
-                call_in.connected = True
-                call_in.save()
-        else:
-            target_device = call_out.target_device
-            # Check if partner has received call
+        # Check if partner has received call if outgoing call
+        if call == call_out:
             if call_out.connected == False:
                 return json.dumps({'status': 'failure', 'error': 'waiting'})
 
-        # TODO: Return location of partner
+        # Return location of partner
         location = get_location(target_id, target_device)
-        return json.dumps({'status': 'success', 'data': location})
+        loc_data = {
+            'latitude': location.lat,
+            'longitude': location.lon
+            }
+        return json.dumps({'status': 'success', 'data': loc_data})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
