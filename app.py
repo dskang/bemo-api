@@ -117,27 +117,40 @@ def discover():
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
-@app.route('/call/<int:id>/init')
-def call_init(id):
+@app.route('/call/<target_id>/init', methods=['POST'])
+def call_init(target_id):
     try:
-        source = find_user_by_token(request.form['token'])
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_service(id)
-        if not target: return json.dumps({'status': 'failure', 'error': 'offline'})
+        # Parse request
+        device_type = request.json['device']
+        token = request.json['token']
+        service = request.json['service']
 
-        database.calls.Call.find_and_modify(
-            {'source_user': source['id'], 'target_user': target['id']},
+        # Determine source and target
+        source = find_user_by_token(token)
+        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        target = find_user_by_service(service, target_id)
+        if not target: raise KeyError
+
+        # TODO: Send push notification to target
+
+        # Invalidate previous calls
+        database.calls.find_and_modify(
+            {'source_id': source._id,
+             'target_id': target._id,
+             'complete': False},
             {'$set': {'complete': True}})
-        database.calls.Call.find_and_modify(
-            {'source_user': target['id'], 'target_user': source['id']},
+        database.calls.find_and_modify(
+            {'source_id': target._id,
+             'target_id': source._id,
+             'complete': False},
             {'$set': {'complete': True}})
-        database.calls.Call({
-            'source_user': 0,
-            'target_user': id,
-            'expires': int(time.time()) + CALL_RINGTIME,
-            'received': False,
-            'complete': False
-        }).save()
+
+        # Create call
+        call = database.calls.Call()
+        call.source_id = source._id
+        call.target_id = target._id
+        call.expires = int(time.time()) + CALL_RINGTIME
+        call.save()
 
         return json.dumps({'status': 'success'})
 

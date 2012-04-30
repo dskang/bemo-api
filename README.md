@@ -71,9 +71,10 @@ Discover friends of a user.
 
 Initiate a location call.
 
-    POST /call/:id/init
-    Content: {device: 'iphone', device_token: str,
-              id: int, token: str, target_id: int}
+    POST /call/:target_id/init
+    Content: {device: 'iphone',
+              token: str,
+              target_service: str}
 
     Returns {status: 'success'} if request successfully placed
     Returns {status: 'failure', error: 'offline'} if other user is not logged in

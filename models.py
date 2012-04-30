@@ -1,4 +1,5 @@
 from mongokit import Document
+from pymongo import objectid
 
 class User(Document):
     structure = {
@@ -24,19 +25,21 @@ class User(Document):
 
 class Call(Document):
     structure = {
-        'source_user': int, # user making call
-        'target_user': int, # user receiving call
+        'source_id': objectid.ObjectId, # id of user making call
+        'target_id': objectid.ObjectId, # id of user receiving call
         'expires': int, # expiration of call
-        'received': bool, # whether call has been connected
+        'connected': bool, # whether call has been connected
         'complete': bool # whether call is complete
         }
+    required_fields = ['source_id', 'target_id']
+    default_values = {'connected': False, 'complete': False}
     validators = {}
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Call from {0} to {1} at {2}>'.format(self.source_user,
-                                                      self.target_user,
-                                                      self.expires)
+        return '<Call from {0} to {1} expiring at {2}>'.format(self.source_user,
+                                                               self.target_user,
+                                                               self.expires)
 
 class Location(Document):
     structure = {
