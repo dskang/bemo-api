@@ -11,8 +11,8 @@ MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
 DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
 RDV_TIMEOUT = 1440 * 14  # token valid for two weeks
-CALL_RINGTIME = 30
-CALL_LINETIME = 30 * 60
+CALL_RINGTIME = 30 # 30 seconds
+CALL_LINETIME = 30 * 60 # 30 minutes
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'facebook'
@@ -174,12 +174,64 @@ def call_init(target_id):
 @app.route('/location/update', methods=['POST'])
 def location_update():
     """Update location of user"""
-    pass
+    try:
+        device = request.json['device']
+        token = request.json['token']
+        lat = request.json['lat']
+        lon = request.json['lon']
+
+        # Determine user
+        user = find_user_by_token(token)
+        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
+
+        # Check for existing location
+        loc = database.locations.find_one(
+            {'user_id': user._id,
+             'device': device})
+        if not loc:
+            # Create location
+            loc = database.locations.Location()
+            loc.user_id = user._id
+            loc.device = device
+        # Update location
+        loc.lat = float(lat)
+        loc.lon = float(lon)
+        loc.time = int(time.time())
+        loc.save()
+        return json.dumps({'status': 'success'})
+
+    except KeyError: pass
+    return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/receive', methods=['POST'])
 def call_receive(target_id):
     """Receive an incoming call from target_id"""
-    pass
+    try:
+        device = request.json['device']
+        token = request.json['token']
+
+        # Determine source and target
+        source = find_user_by_token(token)
+        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        target = find_user_by_id(target_id)
+        if not target: raise KeyError
+
+        # Check for incoming call
+        call_in = database.calls.find_one(
+            {'source_id': target._id,
+             'target_id': source._id,
+             'complete': False})
+        if not call_in:
+            return json.dumps({'status': 'failure', 'error': 'disconnected'})
+        else:
+            # Receive call
+            call_in.connected = True
+            call_in.target_device = unicode(device)
+            call_in.expires = int(time.time()) + CALL_LINETIME
+            return json.dumps({'status': 'success'})
+
+    except KeyError: pass
+    return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/poll')
 def call_poll(target_id):
