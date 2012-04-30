@@ -105,7 +105,7 @@ def discover():
         for service in user.services:
             if service['name'] == FB_SERVICE_ID:
                 # Request friends list
-                r = requests.get('https://graph.facebook.com/{0}/friends?access_token={1}'.format(service['id'], service['token']))
+                r = requests.get('https://graph.facebook.com/me/friends?access_token={0}'.format(service['token']))
                 if r.status_code != 200:
                     return json.dumps({'status': 'failure', 'error': 'service'})
                 # Filter list to app users
