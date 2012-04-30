@@ -164,6 +164,7 @@ def call_init(target_id):
 
 @app.route('/call/<target_id>/poll')
 def call_poll(target_id):
+    """Return target's location if call is connected"""
     try:
         token = request.args['token']
 
@@ -173,23 +174,52 @@ def call_poll(target_id):
         target = find_user_by_id(target_id)
         if not target: raise KeyError
 
-        calls_out = database.calls.Call.find(
-            {'source_user': source['id'], 'target_user': target['id']})
-        calls_in = database.calls.Call.find_and_update(
-            {'source_user': target['id'], 'target_user': source['id']},
-            {'received': True})
+        # Check for incoming and outgoing calls
+        call_in = database.calls.find_one(
+            {'source_id': target._id,
+             'target_id': source._id,
+             'complete': False})
+        call_out = database.calls.Call.find_one(
+            {'source_id': source._id,
+             'target_id': target._id,
+             'complete': False})
 
-        calls = calls_in
-        calls.extend(calls_out)
-        if len(calls) == 0: raise KeyError
-        calls.sort(key=lambda d: d['expires'], reverse=True)
-        call = calls[-1]
+        # Choose more recent call if simultaneous init
+        if call_in and call_out:
+            if call_in.expires > call_out.expires:
+                other = call_out
+                call = call_in
+            else:
+                other = call_in
+                call = call_out
+            # Complete older call
+            other.complete = True
+            other.save()
+        elif call_in:
+            call = call_in
+        elif call_out:
+            call = call_out
+        else:
+            return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
-        if call['complete'] or call['expires'] > int(time.time()):
-            return json.dumps({'status': 'success', 'call': 'disconnected'})
-        if not call['received']:
-            return json.dumps({'status': 'success', 'call': 'waiting'})
-        return json.dumps({'status': 'success', 'call': 'connected'})
+        # Check if call has expired
+        if call.expires > int(time.time()):
+            call.complete = True
+            return json.dumps({'status': 'failure', 'error': 'disconnected'})
+
+        if call == call_in:
+            # Receive call if not already connected
+            if call.connected == False:
+                call.connected = True
+                call.save()
+        else:
+            # Check if partner has received call
+            if call_out.connected == False:
+                return json.dumps({'status': 'failure', 'error': 'waiting'})
+
+        # TODO: Return location of partner
+        location = get_location_by_id(target._id)
+        return json.dumps({'status': 'success', 'data': location})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
