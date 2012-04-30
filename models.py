@@ -26,7 +26,9 @@ class User(Document):
 class Call(Document):
     structure = {
         'source_id': objectid.ObjectId, # id of user making call
+        'source_device': unicode, # type of device
         'target_id': objectid.ObjectId, # id of user receiving call
+        'target_device': unicode, # type of device
         'expires': int, # expiration of call
         'connected': bool, # whether call has been connected
         'complete': bool # whether call is complete
@@ -43,8 +45,8 @@ class Call(Document):
 
 class Location(Document):
     structure = {
+        'user_id': objectid.ObjectId, # user's app id
         'device': unicode, # type of device
-        'device_id': unicode, # device id
         'lat': float, # latitude
         'lon': float, # longitude
         'time': int # time location was recorded

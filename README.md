@@ -79,7 +79,28 @@ Initiate a location call.
     Returns {status: 'failure', error: 'offline'} if other user is not logged in
     Returns {status: 'failure', error: 'auth'} if not authorized
 
-Poll for a location. (In case of failure to open a socket.)
+Receive a location call.
+
+    POST /call/:target_id/receive
+    Content: {device: 'iphone', # device you're receiving from
+              token: str}
+
+    Returns {status: 'success'} if call successfully received
+    Returns {status: 'failure', error: 'disconnected'} if other user disconnected
+    Returns {status: 'failure', error: 'auth'} if not authorized
+
+Update location.
+
+    POST /location/update
+    Content: {device: 'iphone',
+              lat: float,
+              lon: float,
+              token: str}
+
+    Returns {status: 'success'} if location successfully updated
+    Returns {status: 'failure', error: 'auth'} if not authorized
+
+Poll for a location.
 
     GET /call/:target_id/poll?token=TOKEN
 

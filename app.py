@@ -35,6 +35,14 @@ def find_user_by_id(id):
     user = database.users.User.find_one({'_id': id})
     return user
 
+def get_location(user_id, device):
+    """Return location of user for given user id and device type"""
+    location = database.locations.Location.find_one({
+            'user_id': user_id,
+            'device': device
+            })
+    return location
+
 @app.route('/login', methods=['POST'])
 def login():
     """Update user information or create new user"""
@@ -151,6 +159,7 @@ def call_init(target_id):
         # Create call
         call = database.calls.Call()
         call.source_id = source._id
+        call.source_device = unicode(device_type)
         call.target_id = target._id
         call.expires = int(time.time()) + CALL_RINGTIME
         call.save()
@@ -161,6 +170,16 @@ def call_init(target_id):
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
+
+@app.route('/location/update', methods=['POST'])
+def location_update():
+    """Update location of user"""
+    pass
+
+@app.route('/call/<target_id>/receive', methods=['POST'])
+def call_receive(target_id):
+    """Receive an incoming call from target_id"""
+    pass
 
 @app.route('/call/<target_id>/poll')
 def call_poll(target_id):
@@ -208,17 +227,19 @@ def call_poll(target_id):
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
         if call == call_in:
+            target_device = call_in.source_device
             # Receive call if not already connected
-            if call.connected == False:
-                call.connected = True
-                call.save()
+            if call_in.connected == False:
+                call_in.connected = True
+                call_in.save()
         else:
+            target_device = call_out.target_device
             # Check if partner has received call
             if call_out.connected == False:
                 return json.dumps({'status': 'failure', 'error': 'waiting'})
 
         # TODO: Return location of partner
-        location = get_location_by_id(target._id)
+        location = get_location(target_id, target_device)
         return json.dumps({'status': 'success', 'data': location})
 
     except KeyError: pass
