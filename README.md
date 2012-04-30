@@ -59,14 +59,14 @@ Sign in or register using an OAuth single sign-on service. The server checks you
     Content: {device: 'iphone', device_token: str,
               service: 'facebook', service_token: str}
 
-    Returns {status: 'success', token: str}
+    Returns {status: 'success', data: { token: str}}
     Returns {status: 'failure', error: 'auth'} if OAuth fails
 
 Discover friends of a user who are also on the app.
 
     GET /friends?token=TOKEN
 
-    Returns {status: 'success', data: [ {name: str, id: int} ]}
+    Returns {status: 'success', data: [ {name: str, id: str} ]}
     Returns {status: 'failure', error: 'service'} if request to service fails
 
 Initiate a location call.
@@ -104,7 +104,7 @@ Poll for a location.
 
     GET /call/:target_id/poll?token=TOKEN
 
-    Returns {status: 'waiting'} if the other user has not responded to the call
+    Returns {status: 'failure', error: 'waiting'} if the other user has not responded to the call
     Returns {status: 'success', data: {latitude: float, longitude: float}} if the other user has accepted the call
     Returns {status: 'failure', error: 'disconnected'} at most once if the other user has disconnected or timed out
     Returns {status: 'failure', error: 'receive call'} if there is a call to be received before polling
@@ -112,11 +112,10 @@ Poll for a location.
 
 Poll for incoming calls. (In case of failure to open a socket.)
 
-    GET /incoming
-    Params: int id, str token
+    GET /incoming?token=TOKEN
 
-    Returns {status: 'success', data: null} if no calls
-    Returns {status: 'success', data: [ {source_id: int, expires: int} ]} if there are incoming calls
+    Returns {status: 'failure', error: 'waiting'} if no calls
+    Returns {status: 'success', data: { source_id: str }} if there are incoming calls
     Returns {status: 'failure', error: 'auth'} if not authorized
 
 Database

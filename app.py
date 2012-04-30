@@ -96,7 +96,7 @@ def login():
             user.services.append(service)
             user.save()
 
-        return json.dumps({'status': 'success', 'token': app_token})
+        return json.dumps({'status': 'success', 'data': {'token': app_token}})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
@@ -290,15 +290,22 @@ def call_poll(target_id):
 
 @app.route('/incoming')
 def incoming():
+    """Return an incoming call, if any"""
     try:
-        source = get_user_by_token(request.form['token'])
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        token = request.args['token']
 
-        calls = [c for c in database.calls.Call.find_and_update(
-                  {'target_user': source['id'], 'received': False})
-                 if c['expires'] > int(time.time())]
+        user = get_user_by_token(token)
+        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
-        return json.dumps({'status': 'success', 'calls': calls})
+        call = database.calls.Call.find_one({
+                'target_id': user._id,
+                'connected': False,
+                'complete': False
+                })
+        if call:
+            return json.dumps({'status': 'success', 'data': {'source_id': call.source_id}})
+        else:
+            return json.dumps({'status': 'failure', 'error': 'waiting'})
 
     except KeyError: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
