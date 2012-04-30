@@ -62,7 +62,7 @@ Sign in or register using an OAuth single sign-on service. The server checks you
     Returns {status: 'success', token: str}
     Returns {status: 'failure', error: 'auth'} if OAuth fails
 
-Discover friends of a user.
+Discover friends of a user who are also on the app.
 
     GET /friends?token=TOKEN
 
