@@ -185,7 +185,7 @@ def location_update():
         if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         # Check for existing location
-        loc = database.locations.find_one(
+        loc = database.locations.Location.find_one(
             {'user_id': user._id,
              'device': device})
         if not loc:
@@ -217,7 +217,7 @@ def call_receive(target_id):
         if not target: raise KeyError
 
         # Check for incoming call
-        call_in = database.calls.find_one(
+        call_in = database.calls.Call.find_one(
             {'source_id': target._id,
              'target_id': source._id,
              'connected': False,
@@ -247,12 +247,12 @@ def call_poll(target_id):
         if not target: raise KeyError
 
         # Check for incoming and outgoing calls
-        call_in = database.calls.find_one(
+        call_in = database.calls.Call.find_one(
             {'source_id': target._id,
              'target_id': source._id,
              'connected': True, # should have received call before polling
              'complete': False})
-        call_out = database.calls.find_one(
+        call_out = database.calls.Call.find_one(
             {'source_id': source._id,
              'target_id': target._id,
              'complete': False})
