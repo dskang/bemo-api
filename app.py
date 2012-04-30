@@ -17,12 +17,12 @@ TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'facebook'
 
-def find_user_by_token(token):
+def get_user_by_token(token):
     """Return user for given app token"""
     user = database.users.User.find_one({'token': token})
     return user
 
-def find_user_by_service(service_name, service_id):
+def get_user_by_service(service_name, service_id):
     """Return user for given service name and service id"""
     user = database.users.User.find_one({
             'services.name': service_name,
@@ -30,7 +30,7 @@ def find_user_by_service(service_name, service_id):
             })
     return user
 
-def find_user_by_id(id):
+def get_user_by_id(id):
     """Return user for given id"""
     user = database.users.User.find_one({'_id': id})
     return user
@@ -107,7 +107,7 @@ def discover():
     try:
         token = request.args['token']
 
-        user = find_user_by_token(token)
+        user = get_user_by_token(token)
         if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         for service in user.services:
@@ -120,7 +120,7 @@ def discover():
                 result = json.loads(r.text)
                 friends = []
                 for friend in result['data']:
-                    friend_account = find_user_by_service(service['name'], friend['id'])
+                    friend_account = get_user_by_service(service['name'], friend['id'])
                     if friend_account:
                         # Populate list with friend name and our app id
                         friends.append({'name': friend['name'], 'id': friend_account._id})
@@ -139,9 +139,9 @@ def call_init(target_id):
         token = request.json['token']
 
         # Determine source and target
-        source = find_user_by_token(token)
+        source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_id(target_id)
+        target = get_user_by_id(target_id)
         if not target: raise KeyError
 
         # Invalidate previous calls
@@ -181,7 +181,7 @@ def location_update():
         lon = request.json['longitude']
 
         # Determine user
-        user = find_user_by_token(token)
+        user = get_user_by_token(token)
         if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         # Check for existing location
@@ -211,9 +211,9 @@ def call_receive(target_id):
         token = request.json['token']
 
         # Determine source and target
-        source = find_user_by_token(token)
+        source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_id(target_id)
+        target = get_user_by_id(target_id)
         if not target: raise KeyError
 
         # Check for incoming call
@@ -241,9 +241,9 @@ def call_poll(target_id):
         token = request.args['token']
 
         # Determine source and target
-        source = find_user_by_token(token)
+        source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
-        target = find_user_by_id(target_id)
+        target = get_user_by_id(target_id)
         if not target: raise KeyError
 
         # Check for incoming and outgoing calls
@@ -289,7 +289,7 @@ def call_poll(target_id):
 @app.route('/incoming')
 def incoming():
     try:
-        source = find_user_by_token(request.form['token'])
+        source = get_user_by_token(request.form['token'])
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
 
         calls = [c for c in database.calls.Call.find_and_update(
