@@ -100,7 +100,7 @@ Update location.
     Returns {status: 'success'} if location successfully updated
     Returns {status: 'failure', error: 'auth'} if not authorized
 
-Poll for a location.
+Poll for a location. (Alternative to push)
 
     GET /call/:target_id/poll?token=TOKEN
 
@@ -110,7 +110,7 @@ Poll for a location.
     Returns {status: 'failure', error: 'receive call'} if there is a call to be received before polling
     Returns {status: 'failure', error: 'invalid'} if the target is invalid
 
-Poll for incoming calls. (In case of failure to open a socket.)
+Poll for incoming calls. (Alternative to push)
 
     GET /incoming?token=TOKEN
 
