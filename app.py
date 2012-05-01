@@ -64,8 +64,8 @@ def add_device_to_user(device, user):
     # TODO: Find better solution for searching list of dicts
     exists = False
     for d in user.devices:
-        # Use id since user may have multiple devices of same type
-        if d['id'] == device['id']:
+        # Note: this assumes a user possesses only one device of a type
+        if d['type'] == device['type']:
             exists = True
             break
     if not exists:
