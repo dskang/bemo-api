@@ -44,30 +44,43 @@ def get_location(user_id, device):
             })
     return location
 
-def get_service_from_list(service_name, services):
-    """Return a service from the list of services using service_name"""
-    for service in services:
+def get_service_from_user(service_name, user):
+    """Return a service from user using service_name"""
+    for service in user.services:
         if service['name'] == service_name:
             return service
     return None
 
 def add_service_to_user(service, user):
-    """Add service to user if it is not already there"""
-    s = get_service_from_list(service['name'], user.services)
-    if not s:
+    """Add service to user or update service with same name"""
+    s = get_service_from_user(service['name'], user)
+    if s:
+        # Update service
+        s['id'] = service['id']
+        s['token'] = service['token']
+        user.save()
+    else:
+        # Add service
         user.services.append(service)
         user.save()
 
+def get_device_from_user(device_type, user):
+    """Return a device from user using device_type"""
+    for device in user.devices:
+        if device['type'] == device_type:
+            return device
+    return None
+
 def add_device_to_user(device, user):
-    """Add device to use if it is not already there"""
-    # TODO: Find better solution for searching list of dicts
-    exists = False
-    for d in user.devices:
-        # Note: this assumes a user possesses only one device of a type
-        if d['type'] == device['type']:
-            exists = True
-            break
-    if not exists:
+    """Add device to user or update device with same type"""
+    d = get_device_from_user(device['type'], user)
+    if d:
+        # Update device
+        # Note: this will overwrite any existing device for same type
+        d['id'] = device['id']
+        user.save()
+    else:
+        # Add device
         user.devices.append(device)
         user.save()
 
@@ -96,43 +109,40 @@ def login():
         else: raise KeyError
 
         # Search for user in database by device
-        user = database.users.User.find_one({
+        user_by_device = database.users.User.find_one({
                 'devices.type': device['type'],
                 'devices.id': device['id']
              })
-        if user:
-            app_token = user.token
-            # Add service if not already there
-            add_service_to_user(service, user)
-            # Rewrite service information for user to handle different
-            # user on same device
-            saved_service = get_service_from_list(service['name'], user.services)
-            if saved_service:
-                saved_service['id'] = service['id']
-                saved_service['token'] = service['token']
-                user.save()
-        else:
-            # Search for user in database by service
-            user = database.users.User.find_one({
-                    'services.name': service['name'],
-                    'services.id': service['id']
-                    })
-            if user:
-                app_token = user.token
-                # Add device if not already there
-                add_device_to_user(device, user)
-            else:
-                # Generate app token
-                app_token = md5.new(str(time.time()))
-                app_token.update(service['id'])
-                app_token = unicode(app_token.hexdigest())
+        # Search for user in database by service
+        user_by_service = database.users.User.find_one({
+                'services.name': service['name'],
+                'services.id': service['id']
+                })
 
-                # Add user to database
-                user = database.users.User()
-                user.token = app_token
-                user.devices.append(device)
-                user.services.append(service)
-                user.save()
+        # Check if user exists in database
+        if user_by_device or user_by_service:
+            if user_by_device:
+                user = user_by_device
+            else:
+                user = user_by_service
+            # Reuse app token
+            app_token = user.token
+            # Add service or update it
+            add_service_to_user(service, user)
+            # Add device or update it
+            add_device_to_user(device, user)
+        else:
+            # Generate app token
+            app_token = md5.new(str(time.time()))
+            app_token.update(service['id'])
+            app_token = unicode(app_token.hexdigest())
+
+            # Add user to database
+            user = database.users.User()
+            user.token = app_token
+            user.devices.append(device)
+            user.services.append(service)
+            user.save()
 
         return json.dumps({'status': 'success', 'data': {'token': app_token}})
 
