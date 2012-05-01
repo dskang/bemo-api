@@ -3,7 +3,6 @@ from pymongo import objectid
 
 class User(Document):
     structure = {
-        'name': unicode, # name of user
         'token': unicode, # app token
         'devices': [{
             'type': unicode, # device type
@@ -11,11 +10,12 @@ class User(Document):
             }],
         'services': [{
             'name': unicode, # service name
+            'username': unicode, # user's name on service
             'id': unicode, # user's id on service
             'token': unicode # user's access token for service
             }]
         }
-    required_fields = ['name', 'token']
+    required_fields = ['token']
     default_values = {'devices': [], 'services': []}
     validators = {}
 
