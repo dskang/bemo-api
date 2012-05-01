@@ -288,6 +288,41 @@ def call_receive(target_id):
     except KeyError: pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
+@app.route('/call/<target_id>/end', methods=['POST'])
+def call_end(target_id):
+    """End call between user and target_id"""
+    try:
+        token = request.json['token']
+
+        # Determine source and target
+        source = get_user_by_token(token)
+        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
+        target_id = objectid.ObjectId(target_id)
+        target = get_user_by_id(target_id)
+        if not target: raise KeyError
+
+        # Check for calls
+        call_in = database.calls.Call.find_one(
+            {'source_id': target._id,
+             'target_id': source._id,
+             'complete': False})
+        call_out = database.calls.Call.find_one(
+            {'source_id': source._id,
+             'target_id': target._id,
+             'complete': False})
+
+        # Close open calls
+        if call_in:
+            call_in.complete = True
+            call_in.save()
+        if call_out:
+            call_out.complete = True
+            call_out.save()
+        return jsonify({'status': 'success'})
+
+    except KeyError: pass
+    return jsonify({'status': 'failure', 'error': 'invalid'})
+
 @app.route('/call/<target_id>/poll')
 def call_poll(target_id):
     """Return target's location if call is connected"""

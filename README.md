@@ -89,6 +89,14 @@ Receive a location call.
     Returns {status: 'failure', error: 'disconnected'} if other user disconnected
     Returns {status: 'failure', error: 'auth'} if not authorized
 
+End a location call.
+
+    POST /call/:target_id/end
+    Content: {token: str}
+
+    Returns {status: 'success'} if call successfully ended or call is already over
+    Returns {status: 'failure', error: 'auth'} if not authorized
+
 Update location.
 
     POST /location/update
