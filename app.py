@@ -1,5 +1,6 @@
 from flask import Flask, request
 from mongokit import Connection
+from pymongo import objectid, errors
 from models import User, Call, Location
 import os, requests, urlparse, json, time, md5
 
@@ -154,7 +155,7 @@ def discover():
                     friend_account = get_user_by_service(service['name'], friend['id'])
                     if friend_account:
                         # Populate list with friend name and our app id
-                        friends.append({'name': friend['name'], 'id': friend_account._id})
+                        friends.append({'name': friend['name'], 'id': str(friend_account._id)})
 
         return json.dumps({'status': 'success', 'data': friends})
 
@@ -172,6 +173,7 @@ def call_init(target_id):
         # Determine source and target
         source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
 
@@ -200,6 +202,8 @@ def call_init(target_id):
         return json.dumps({'status': 'success'})
 
     except KeyError: pass
+    except TypeError: pass
+    except errors.InvalidId: pass
     return json.dumps({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/location/update', methods=['POST'])
@@ -236,7 +240,7 @@ def location_update():
 
 @app.route('/call/<target_id>/receive', methods=['POST'])
 def call_receive(target_id):
-    """Receive an incoming call from target_id"""
+    """Connect user with an incoming call from target_id"""
     try:
         device = request.json['device']
         token = request.json['token']
@@ -244,6 +248,7 @@ def call_receive(target_id):
         # Determine source and target
         source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
 
@@ -274,6 +279,7 @@ def call_poll(target_id):
         # Determine source and target
         source = get_user_by_token(token)
         if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
 
@@ -334,7 +340,7 @@ def incoming():
                 'complete': False
                 })
         if call:
-            return json.dumps({'status': 'success', 'data': {'source_id': call.source_id}})
+            return json.dumps({'status': 'success', 'data': {'source_id': str(call.source_id)}})
         else:
             return json.dumps({'status': 'failure', 'error': 'waiting'})
 
