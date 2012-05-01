@@ -306,7 +306,7 @@ def call_poll(target_id):
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
         # Check if call has expired
-        if call.expires > int(time.time()):
+        if int(time.time()) > call.expires:
             call.complete = True
             return json.dumps({'status': 'failure', 'error': 'disconnected'})
 
