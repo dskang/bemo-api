@@ -360,6 +360,7 @@ def call_poll(target_id):
         # Check if call has expired
         if int(time.time()) > call.expires:
             call.complete = True
+            call.save()
             return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if partner has received call if outgoing call
