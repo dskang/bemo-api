@@ -15,7 +15,7 @@ class User(Document):
             'token': unicode # user's access token for service
             }]
         }
-    required_fields = ['token']
+    required_fields = ['name', 'token']
     default_values = {'devices': [], 'services': []}
     validators = {}
 
