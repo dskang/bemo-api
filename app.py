@@ -23,14 +23,6 @@ def get_user_by_token(token):
     user = database.users.User.find_one({'token': token})
     return user
 
-def get_user_by_service(service_name, service_id):
-    """Return user for given service name and service id"""
-    user = database.users.User.find_one({
-            'services.name': service_name,
-            'services.id': service_id
-            })
-    return user
-
 def get_user_by_id(id):
     """Return user for given id"""
     user = database.users.User.find_one({'_id': id})
