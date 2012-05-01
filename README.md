@@ -121,39 +121,36 @@ Poll for incoming calls. (In case of failure to open a socket.)
 Database
 --------
 
-class User(Document):
-    structure = {
-        'token': unicode, # app token
-        'devices': [{
-            'type': unicode, # device type
-            'id': unicode # device id
-            }],
-        'services': [{
-            'name': unicode, # service name
-            'id': unicode, # user's id on service
-            'token': unicode # user's access token for service
-            }]
-        }
+User
 
-class Call(Document):
-    structure = {
-        'source_id': objectid.ObjectId, # id of user making call
-        'source_device': unicode, # type of device
-        'target_id': objectid.ObjectId, # id of user receiving call
-        'target_device': unicode, # type of device
-        'expires': int, # expiration of call
-        'connected': bool, # whether call has been connected
-        'complete': bool # whether call is complete
-        }
+    'token': unicode, # app token
+    'devices': [{
+        'type': unicode, # device type
+        'id': unicode # device id
+        }],
+    'services': [{
+        'name': unicode, # service name
+        'id': unicode, # user's id on service
+        'token': unicode # user's access token for service
+        }]
 
-class Location(Document):
-    structure = {
-        'user_id': objectid.ObjectId, # user's app id
-        'device': unicode, # type of device
-        'lat': float, # latitude
-        'lon': float, # longitude
-        'time': int # time location was recorded
-        }
+Call
+
+    'source_id': objectid.ObjectId, # id of user making call
+    'source_device': unicode, # type of device
+    'target_id': objectid.ObjectId, # id of user receiving call
+    'target_device': unicode, # type of device
+    'expires': int, # expiration of call
+    'connected': bool, # whether call has been connected
+    'complete': bool # whether call is complete
+
+Location
+
+    'user_id': objectid.ObjectId, # user's app id
+    'device': unicode, # type of device
+    'lat': float, # latitude
+    'lon': float, # longitude
+    'time': int # time location was recorded
 
 Trivia
 ------
