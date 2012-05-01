@@ -164,6 +164,7 @@ def discover():
         user = get_user_by_token(token)
         if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
 
+        friends = []
         for service in user.services:
             if service['name'] == FB_SERVICE_ID:
                 # Request friends list
@@ -178,7 +179,6 @@ def discover():
                         'services.id': {'$in': friend_ids}
                         })
                 # Populate list with friend name and our app id
-                friends = []
                 for friend in friends_cursor:
                     friends.append({'name': friend['name'], 'id': str(friend['_id'])})
 
