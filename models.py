@@ -3,6 +3,7 @@ from pymongo import objectid
 
 class User(Document):
     structure = {
+        'name': unicode, # name of user
         'token': unicode, # app token
         'devices': [{
             'type': unicode, # device type

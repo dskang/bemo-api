@@ -105,6 +105,7 @@ def login():
                 return json.dumps({'status': 'failure', 'error': 'auth'})
             # Parse FB response
             results = json.loads(r.text)
+            user_name = unicode(results['name'])
             service['id'] = unicode(results['id'])
         else: raise KeyError
 
@@ -131,6 +132,10 @@ def login():
             add_service_to_user(service, user)
             # Add device or update it
             add_device_to_user(device, user)
+            # Overwrite user's name
+            if user.name != user_name:
+                user.name = user_name
+                user.save()
         else:
             # Generate app token
             app_token = md5.new(str(time.time()))
@@ -139,6 +144,7 @@ def login():
 
             # Add user to database
             user = database.users.User()
+            user.name = user_name
             user.token = app_token
             user.devices.append(device)
             user.services.append(service)
@@ -174,7 +180,7 @@ def discover():
                 # Populate list with friend name and our app id
                 friends = []
                 for friend in friends_cursor:
-                    friends.append({'name': 'FIXME', 'id': str(friend['_id'])})
+                    friends.append({'name': friend['name'], 'id': str(friend['_id'])})
 
         return json.dumps({'status': 'success', 'data': friends})
 
