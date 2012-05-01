@@ -166,12 +166,15 @@ def discover():
                     return json.dumps({'status': 'failure', 'error': 'service'})
                 # Filter list to app users
                 result = json.loads(r.text)
+                friend_ids = [friend['id'] for friend in result['data']]
+                friends_cursor = database.users.find({
+                        'services.name': service['name'],
+                        'services.id': {'$in': friend_ids}
+                        })
+                # Populate list with friend name and our app id
                 friends = []
-                for friend in result['data']:
-                    friend_account = get_user_by_service(service['name'], friend['id'])
-                    if friend_account:
-                        # Populate list with friend name and our app id
-                        friends.append({'name': friend['name'], 'id': str(friend_account._id)})
+                for friend in friends_cursor:
+                    friends.append({'name': 'FIXME', 'id': str(friend['_id'])})
 
         return json.dumps({'status': 'success', 'data': friends})
 
