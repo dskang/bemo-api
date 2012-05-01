@@ -44,18 +44,17 @@ def get_location(user_id, device):
             })
     return location
 
+def get_service_from_list(service_name, services):
+    """Return a service from the list of services using service_name"""
+    for service in services:
+        if service['name'] == service_name:
+            return service
+    return None
+
 def add_service_to_user(service, user):
     """Add service to user if it is not already there"""
-    # TODO: Find better solution for searching list of dicts
-    exists = False
-    for s in user.services:
-        if s['name'] == service['name']:
-            exists = True
-            # Update service token
-            s['token'] = service['token']
-            user.save()
-            break
-    if not exists:
+    s = get_service_from_list(service['name'], user.services)
+    if not s:
         user.services.append(service)
         user.save()
 
@@ -103,8 +102,15 @@ def login():
              })
         if user:
             app_token = user.token
-            # Add service if not already there; else, update the service token
+            # Add service if not already there
             add_service_to_user(service, user)
+            # Rewrite service information for user to handle different
+            # user on same device
+            saved_service = get_service_from_list(service['name'], user.services)
+            if saved_service:
+                saved_service['id'] = service['id']
+                saved_service['token'] = service['token']
+                user.save()
         else:
             # Search for user in database by service
             user = database.users.User.find_one({
