@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from mongokit import Connection
 from pymongo import objectid, errors
 from models import User, Call, Location
@@ -102,7 +102,7 @@ def login():
         if service['name'] == FB_SERVICE_ID:
             r = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service['token']))
             if r.status_code != 200:
-                return json.dumps({'status': 'failure', 'error': 'auth'})
+                return jsonify({'status': 'failure', 'error': 'auth'})
             # Parse FB response
             results = json.loads(r.text)
             user_name = unicode(results['name'])
@@ -150,10 +150,10 @@ def login():
             user.services.append(service)
             user.save()
 
-        return json.dumps({'status': 'success', 'data': {'token': app_token}})
+        return jsonify({'status': 'success', 'data': {'token': app_token}})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/friends', methods=['GET'])
 def discover():
@@ -162,7 +162,7 @@ def discover():
         token = request.args['token']
 
         user = get_user_by_token(token)
-        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
 
         friends = []
         for service in user.services:
@@ -170,7 +170,7 @@ def discover():
                 # Request friends list
                 r = requests.get('https://graph.facebook.com/me/friends?access_token={0}'.format(service['token']))
                 if r.status_code != 200:
-                    return json.dumps({'status': 'failure', 'error': 'service'})
+                    return jsonify({'status': 'failure', 'error': 'service'})
                 # Filter list to app users
                 result = json.loads(r.text)
                 friend_ids = [friend['id'] for friend in result['data']]
@@ -182,10 +182,10 @@ def discover():
                 for friend in friends_cursor:
                     friends.append({'name': friend['name'], 'id': str(friend['_id'])})
 
-        return json.dumps({'status': 'success', 'data': friends})
+        return jsonify({'status': 'success', 'data': friends})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/init', methods=['POST'])
 def call_init(target_id):
@@ -197,7 +197,7 @@ def call_init(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
@@ -224,12 +224,12 @@ def call_init(target_id):
 
         # TODO: Send push notification to target
 
-        return json.dumps({'status': 'success'})
+        return jsonify({'status': 'success'})
 
     except KeyError: pass
     except TypeError: pass
     except errors.InvalidId: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/location/update', methods=['POST'])
 def location_update():
@@ -242,7 +242,7 @@ def location_update():
 
         # Determine user
         user = get_user_by_token(token)
-        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
 
         # Check for existing location
         loc = database.locations.Location.find_one(
@@ -258,10 +258,10 @@ def location_update():
         loc.lon = float(lon)
         loc.time = int(time.time())
         loc.save()
-        return json.dumps({'status': 'success'})
+        return jsonify({'status': 'success'})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/receive', methods=['POST'])
 def call_receive(target_id):
@@ -272,7 +272,7 @@ def call_receive(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
@@ -284,17 +284,17 @@ def call_receive(target_id):
              'connected': False,
              'complete': False})
         if not call_in:
-            return json.dumps({'status': 'failure', 'error': 'disconnected'})
+            return jsonify({'status': 'failure', 'error': 'disconnected'})
         else:
             # Receive call
             call_in.connected = True
             call_in.target_device = unicode(device)
             call_in.expires = int(time.time()) + CALL_LINETIME
             call_in.save()
-            return json.dumps({'status': 'success'})
+            return jsonify({'status': 'success'})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/poll')
 def call_poll(target_id):
@@ -304,7 +304,7 @@ def call_poll(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
         if not target: raise KeyError
@@ -321,24 +321,24 @@ def call_poll(target_id):
         if call_in:
             # Make sure call has been received
             if not call_in.connected:
-                return json.dumps({'status': 'failure', 'error': 'receive call'})
+                return jsonify({'status': 'failure', 'error': 'receive call'})
             call = call_in
             target_device = call_in.source_device
         elif call_out:
             call = call_out
             target_device = call_out.target_device
         else:
-            return json.dumps({'status': 'failure', 'error': 'disconnected'})
+            return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if call has expired
         if int(time.time()) > call.expires:
             call.complete = True
-            return json.dumps({'status': 'failure', 'error': 'disconnected'})
+            return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if partner has received call if outgoing call
         if call == call_out:
             if call_out.connected == False:
-                return json.dumps({'status': 'failure', 'error': 'waiting'})
+                return jsonify({'status': 'failure', 'error': 'waiting'})
 
         # Return location of partner
         location = get_location(target_id, target_device)
@@ -346,10 +346,10 @@ def call_poll(target_id):
             'latitude': location.lat,
             'longitude': location.lon
             }
-        return json.dumps({'status': 'success', 'data': loc_data})
+        return jsonify({'status': 'success', 'data': loc_data})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/incoming')
 def incoming():
@@ -358,7 +358,7 @@ def incoming():
         token = request.args['token']
 
         user = get_user_by_token(token)
-        if not user: return json.dumps({'status': 'failure', 'error': 'auth'})
+        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
 
         call = database.calls.Call.find_one({
                 'target_id': user._id,
@@ -366,12 +366,12 @@ def incoming():
                 'complete': False
                 })
         if call:
-            return json.dumps({'status': 'success', 'data': {'source_id': str(call.source_id)}})
+            return jsonify({'status': 'success', 'data': {'source_id': str(call.source_id)}})
         else:
-            return json.dumps({'status': 'failure', 'error': 'waiting'})
+            return jsonify({'status': 'failure', 'error': 'waiting'})
 
     except KeyError: pass
-    return json.dumps({'status': 'failure', 'error': 'invalid'})
+    return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/')
 def hello():
