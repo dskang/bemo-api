@@ -265,6 +265,7 @@ def call_receive(target_id):
             call_in.connected = True
             call_in.target_device = unicode(device)
             call_in.expires = int(time.time()) + CALL_LINETIME
+            call_in.save()
             return json.dumps({'status': 'success'})
 
     except KeyError: pass
