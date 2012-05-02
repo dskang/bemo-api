@@ -76,7 +76,6 @@ Initiate a location call.
               token: str}
 
     Returns {status: 'success'} if request successfully placed
-    Returns {status: 'failure', error: 'offline'} if other user is not logged in
     Returns {status: 'failure', error: 'auth'} if not authorized
 
 Receive a location call.
