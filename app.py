@@ -155,22 +155,13 @@ def discover():
         friends = []
         for service in user.services:
             if service['name'] == FB_SERVICE_ID:
-                friend_ids = []
-                # Request friends list
-                r = requests.get('https://graph.facebook.com/me/friends?access_token={0}&limit=1000'.format(service['token']))
+                # Request entire friends list
+                r = requests.get('https://graph.facebook.com/me/friends?access_token={0}&limit=5000'.format(service['token']))
                 if r.status_code != 200:
                     return jsonify({'status': 'failure', 'error': 'service'})
                 result = json.loads(r.text)
                 # Grab Facebook IDs of friends
-                friend_ids.extend([friend['id'] for friend in result['data']])
-                # Go through rest of friends
-                while 'next' in result['paging']:
-                    next_url = result['paging']['next']
-                    r = requests.get(next_url)
-                    if r.status_code != 200:
-                        return jsonify({'status': 'failure', 'error': 'service'})
-                    result = json.loads(r.text)
-                    friend_ids.extend([friend['id'] for friend in result['data']])
+                friend_ids = [friend['id'] for friend in result['data']]
                 # Find friends in database
                 friends_cursor = database.users.find({
                         'services.name': service['name'],
