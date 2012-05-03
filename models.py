@@ -6,7 +6,8 @@ class User(Document):
         'token': unicode, # app token
         'devices': [{
             'type': unicode, # device type
-            'id': unicode # device id
+            'id': unicode, # device id
+            'token': unicode # device token for push notifications
             }],
         'services': [{
             'name': unicode, # service name

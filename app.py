@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from mongokit import Connection
 from pymongo import objectid, errors
 from models import User, Call, Location
-import os, requests, urlparse, json, time, md5
+from apns import APNs, Payload, PayloadAlert
+import os, requests, urlparse, json, time, md5, sys
 
 app = Flask(__name__)
 
@@ -17,6 +18,9 @@ CALL_LINETIME = 30 * 60 # 30 minutes
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'facebook'
+
+INCOMING_CALL = "{0} would like to share location with you."
+APNS_TOKEN = "d8cddf13e61d4569348e7dbffc2d7a469c2a957c209c4ebd4be9ae387cd2c88c"
 
 def get_user_by_token(token):
     """Return user for given app token"""
@@ -76,6 +80,29 @@ def add_device_to_user(device, user):
         # Add device
         user.devices.append(device)
         user.save()
+
+def notify_by_push(source_name, target_device_token):
+        """
+        Sends a push notification for an incoming call.
+        Return True on success and False on failure
+        """
+        # TODO: add "Accept" to Localizable.strings
+        alert = PayloadAlert(body = INCOMING_CALL.format(source_name),
+                             action_loc_key = 'ACCEPT')
+        payload = Payload(alert=alert, sound="default", badge=1)
+        apns.gateway_server.send_notification(target_device_token, payload)
+
+        # Get feedback messages
+        for (token_hex, fail_time) in apns.feedback_server.items():
+            # TODO: Use fail_time to determine if user reregistered
+            # device after push failed (cannot support with current DB
+            # structure)
+
+            # TODO: Remove device if appropriate and remove user if he
+            # has no more devices
+            return False
+
+        return True
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -213,9 +240,16 @@ def call_init(target_id):
         call.expires = int(time.time()) + CALL_RINGTIME
         call.save()
 
-        # TODO: Send push notification to target
+        # Send push notification to target
         service = get_service_from_user(service_name, source)
         source_name = service['username']
+        success = notify_by_push(source_name, APNS_TOKEN)
+        if success:
+            print "Push succeeded"
+        else:
+            print "Push failed"
+        # TODO: Decide whether we should let the caller believe that
+        # the call has been started even if target uninstalled app
 
         return jsonify({'status': 'success'})
 
@@ -409,12 +443,20 @@ def hello():
 
 if __name__ == "__main__":
     try:
+        # Connect to APNs
+        apns = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-dev-key.pem')
+    except:
+        print "Error: Unable to connect to APNs"
+        sys.exit(1)
+
+    try:
         # Connect to database
         connection = Connection(MONGODB_HOST, MONGODB_PORT)
         connection.register([User, Call, Location])
         database = connection[DATABASE_NAME]
     except:
         print "Error: Unable to connect to database"
+        sys.exit(1)
 
     # Start the server
     app.debug = True
