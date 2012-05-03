@@ -73,6 +73,7 @@ Initiate a location call.
 
     POST /call/:target_id/init
     Content: {device: 'iphone',
+              service: 'facebook',
               token: str}
 
     Returns {status: 'success'} if request successfully placed

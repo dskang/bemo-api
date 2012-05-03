@@ -184,6 +184,7 @@ def call_init(target_id):
         # Parse request
         device_type = request.json['device']
         token = request.json['token']
+        service_name = request.json['service']
 
         # Determine source and target
         source = get_user_by_token(token)
@@ -213,6 +214,8 @@ def call_init(target_id):
         call.save()
 
         # TODO: Send push notification to target
+        service = get_service_from_user(service_name, source)
+        source_name = service['username']
 
         return jsonify({'status': 'success'})
 
