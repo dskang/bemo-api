@@ -19,9 +19,6 @@ TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 FB_SERVICE_ID = 'facebook'
 
-INCOMING_CALL = "{0} would like to share location with you."
-APNS_TOKEN = "d8cddf13e61d4569348e7dbffc2d7a469c2a957c209c4ebd4be9ae387cd2c88c"
-
 def get_user_by_token(token):
     """Return user for given app token"""
     user = database.users.User.find_one({'token': token})
@@ -83,27 +80,28 @@ def add_device_to_user(device, user):
         user.save()
 
 def notify_by_push(source_name, target_device_token):
-        """
-        Sends a push notification for an incoming call.
-        Return True on success and False on failure
-        """
-        # TODO: add "Accept" to Localizable.strings
-        alert = PayloadAlert(body = INCOMING_CALL.format(source_name),
-                             action_loc_key = 'ACCEPT')
-        payload = Payload(alert=alert, sound="default", badge=1)
-        apns.gateway_server.send_notification(target_device_token, payload)
+    """
+    Sends a push notification for an incoming call.
+    Return True on success and False on failure
+    """
+    alert = PayloadAlert(body = None,
+                         action_loc_key = 'ACCEPT',
+                         loc_key = 'INCOMING_CALL',
+                         loc_args = [source_name])
+    payload = Payload(alert=alert, sound="default", badge=1)
+    apns.gateway_server.send_notification(target_device_token, payload)
 
-        # Get feedback messages
-        for (token_hex, fail_time) in apns.feedback_server.items():
-            # TODO: Use fail_time to determine if user reregistered
-            # device after push failed (cannot support with current DB
-            # structure)
+    # Get feedback messages
+    for (token_hex, fail_time) in apns.feedback_server.items():
+        # TODO: Use fail_time to determine if user reregistered
+        # device after push failed (cannot support with current DB
+        # structure)
 
-            # TODO: Remove device if appropriate and remove user if he
-            # has no more devices
-            return False
+        # TODO: Remove device if appropriate and remove user if he
+        # has no more devices
+        return False
 
-        return True
+    return True
 
 @app.route('/login', methods=['POST'])
 def login():
