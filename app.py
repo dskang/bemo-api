@@ -242,16 +242,14 @@ def call_init(target_id):
         call.expires = int(time.time()) + CALL_RINGTIME
         call.save()
 
-        # Send push notification to target
+        # Send push notification to all of target's devices
         service = get_service_from_user(service_name, source)
         source_name = service['username']
-        success = notify_by_push(source_name, APNS_TOKEN)
-        if success:
-            print "Push succeeded"
-        else:
-            print "Push failed"
-        # TODO: Decide whether we should let the caller believe that
-        # the call has been started even if target uninstalled app
+        for device in target.devices:
+            device_token = device['token']
+            success = notify_by_push(source_name, device_token)
+            # TODO: Decide whether we should let the caller believe that
+            # the call has been started even if target uninstalled app
 
         return jsonify({'status': 'success'})
 
