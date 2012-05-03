@@ -56,7 +56,7 @@ Data sent to the server by GET is encoded in a query string. Data sent with POST
 Sign in or register using an OAuth single sign-on service. The server checks your OAuth token. You get a Rendezvous user ID and a session token valid for two weeks. We only support Facebook right now.
 
     POST /login
-    Content: {device: 'iphone', device_token: str,
+    Content: {device: 'iphone', device_id: str, device_token: str,
               service: 'facebook', service_token: str}
 
     Returns {status: 'success', data: { token: str}}

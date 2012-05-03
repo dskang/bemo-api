@@ -75,6 +75,7 @@ def add_device_to_user(device, user):
         # Update device
         # Note: this will overwrite any existing device for same type
         d['id'] = device['id']
+        d['token'] = device['token']
         user.save()
     else:
         # Add device
@@ -111,7 +112,8 @@ def login():
         # Read in request data
         device = {
             'type': unicode(request.json['device']),
-            'id': unicode(request.json['device_token'])
+            'id': unicode(request.json['device_id']),
+            'token': unicode(request.json['device_token'])
             }
         service = {
             'name': unicode(request.json['service']),
