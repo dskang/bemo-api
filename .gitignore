@@ -2,3 +2,4 @@ venv
 *.pyc
 tmp
 apns_resources/
+.DS_Store

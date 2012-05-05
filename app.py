@@ -17,6 +17,8 @@ CALL_RINGTIME = 30 # 30 seconds
 CALL_LINETIME = 30 * 60 # 30 minutes
 TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
+LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
+
 FB_SERVICE_ID = 'facebook'
 
 def get_user_by_token(token):
@@ -35,7 +37,10 @@ def get_location(user_id, device):
             'user_id': user_id,
             'device': device
             })
-    return location
+    if int(time.time()) - location.time <= LOC_TIME_THRESHOLD:
+        return location
+    else:
+        return None
 
 def get_service_from_user(service_name, user):
     """Return a service from user using service_name"""
@@ -279,6 +284,7 @@ def location_update():
             loc = database.locations.Location()
             loc.user_id = user._id
             loc.device = device
+
         # Update location
         loc.lat = float(lat)
         loc.lon = float(lon)
@@ -404,10 +410,19 @@ def call_poll(target_id):
 
         # Return location of partner
         location = get_location(target_id, target_device)
-        loc_data = {
-            'latitude': location.lat,
-            'longitude': location.lon
-            }
+        if location:
+            loc_data = {
+                'latitude': location.lat,
+                'longitude': location.lon
+                }
+        else:
+            # Return fake location until we receive real one
+            # FIXME: Avoid returning fake data!
+            loc_data = {
+                'latitude': 0,
+                'longitude': 0
+                }
+
         return jsonify({'status': 'success', 'data': loc_data})
 
     except KeyError: pass
