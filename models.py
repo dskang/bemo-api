@@ -31,7 +31,7 @@ class Call(Document):
         'source_device': unicode, # type of device
         'target_id': objectid.ObjectId, # id of user receiving call
         'target_device': unicode, # type of device
-        'expires': int, # expiration of call
+        'time': int, # time that call was made
         'connected': bool, # whether call has been connected
         'complete': bool # whether call is complete
         }

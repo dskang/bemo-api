@@ -12,10 +12,7 @@ MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
 MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
 DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
-RDV_TIMEOUT = 1440 * 14  # token valid for two weeks
 CALL_RINGTIME = 30 # 30 seconds
-CALL_LINETIME = 30 * 60 # 30 minutes
-TIME_EXPIRED = 999999999999 # epoch time for expiring records
 
 LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
 
@@ -243,7 +240,7 @@ def call_init(target_id):
         call.source_id = source._id
         call.source_device = unicode(device_type)
         call.target_id = target._id
-        call.expires = int(time.time()) + CALL_RINGTIME
+        call.time = int(time.time())
         call.save()
 
         # Send push notification to all of target's devices
@@ -321,7 +318,6 @@ def call_receive(target_id):
             # Receive call
             call_in.connected = True
             call_in.target_device = unicode(device)
-            call_in.expires = int(time.time()) + CALL_LINETIME
             call_in.save()
             return jsonify({'status': 'success'})
 
@@ -398,7 +394,7 @@ def call_poll(target_id):
             return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if call has expired
-        if int(time.time()) > call.expires:
+        if not call.connected and int(time.time()) > call.time + CALL_RINGTIME:
             call.complete = True
             call.save()
             return jsonify({'status': 'failure', 'error': 'disconnected'})
