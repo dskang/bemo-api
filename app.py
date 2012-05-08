@@ -80,7 +80,7 @@ def add_device_to_user(device, user):
         user.devices.append(device)
         user.save()
 
-def notify_by_push(source_name, source_id, target_device_token):
+def notify_by_push(message_key, source_name, source_id, target_device_token):
     """
     Sends a push notification for an incoming call.
     Return True on success and False on failure
@@ -88,7 +88,7 @@ def notify_by_push(source_name, source_id, target_device_token):
     custom = {'source_id': source_id}
     alert = PayloadAlert(body = None,
                          action_loc_key = 'ACCEPT',
-                         loc_key = 'INCOMING_CALL',
+                         loc_key = message_key,
                          loc_args = [source_name])
     payload = Payload(alert=alert, sound="default", custom=custom)
     apns.gateway_server.send_notification(target_device_token, payload)
@@ -248,7 +248,8 @@ def call_init(target_id):
         source_name = service['username']
         for device in target.devices:
             device_token = device['token']
-            success = notify_by_push(source_name, str(source._id), device_token)
+            success = notify_by_push('INCOMING_CALL', source_name, 
+                                     str(source._id), device_token)
             # TODO: Decide whether we should let the caller believe that
             # the call has been started even if target uninstalled app
 
@@ -347,8 +348,13 @@ def call_end(target_id):
              'target_id': target._id,
              'complete': False})
 
-        # TODO: Send push notification saying that the target user
+        # Send push notification saying that the target user
         # missed a Lumo request if the call was not connected on end
+        for device in target.devices:
+            device_token = device['token']
+            notify_by_push('MISSED_INCOMING_CALL', source_name, 
+                           str(source._id), device_token)
+            # disregard any failure notifications that come back
 
         # Close open calls
         if call_in:
