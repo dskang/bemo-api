@@ -12,8 +12,7 @@ MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
 MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
 DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
-CALL_RINGTIME = 30 # 30 seconds
-
+CALL_RINGTIME_THRESHOLD = 60 * 60 # number of seconds until unreceived call expires
 LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
 
 FB_SERVICE_ID = 'facebook'
@@ -398,7 +397,7 @@ def call_poll(target_id):
             return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if call has expired
-        if not call.connected and int(time.time()) > call.time + CALL_RINGTIME:
+        if not call.connected and int(time.time()) > call.time + CALL_RINGTIME_THRESHOLD:
             call.complete = True
             call.save()
             return jsonify({'status': 'failure', 'error': 'disconnected'})
