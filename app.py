@@ -17,6 +17,10 @@ LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
 
 FB_SERVICE_ID = 'facebook'
 
+# Push notification messages
+INCOMING_CALL = 'INCOMING_CALL'
+MISSED_CALL = 'MISSED_CALL'
+
 def get_user_by_token(token):
     """Return user for given app token"""
     user = database.users.User.find_one({'token': token})
@@ -85,12 +89,20 @@ def notify_by_push(message_key, source_name, source_id, target_device_token):
     Sends a push notification for an incoming call.
     Return True on success and False on failure
     """
-    custom = {'source_id': source_id}
-    alert = PayloadAlert(body = None,
-                         action_loc_key = 'ACCEPT',
-                         loc_key = message_key,
-                         loc_args = [source_name])
-    payload = Payload(alert=alert, sound="default", custom=custom)
+    if message_key == INCOMING_CALL:
+        custom = {'source_id': source_id}
+        alert = PayloadAlert(body = None,
+                             action_loc_key = 'ACCEPT',
+                             loc_key = message_key,
+                             loc_args = [source_name])
+        payload = Payload(alert=alert, sound="default", custom=custom)
+    elif message_key == MISSED_CALL:
+        alert = PayloadAlert(body = None,
+                             loc_key = message_key,
+                             loc_args = [source_name])
+        payload = Payload(alert=alert, sound="default")
+
+    # Send notification
     apns.gateway_server.send_notification(target_device_token, payload)
 
     # Get feedback messages
@@ -248,7 +260,7 @@ def call_init(target_id):
         source_name = service['username']
         for device in target.devices:
             device_token = device['token']
-            success = notify_by_push('INCOMING_CALL', source_name, 
+            success = notify_by_push(INCOMING_CALL, source_name,
                                      str(source._id), device_token)
             # TODO: Decide whether we should let the caller believe that
             # the call has been started even if target uninstalled app
@@ -349,12 +361,12 @@ def call_end(target_id):
              'complete': False})
 
         # Send push notification saying that the target user
-        # missed a Lumo request if the call was not connected on end
-        for device in target.devices:
-            device_token = device['token']
-            notify_by_push('MISSED_INCOMING_CALL', source_name, 
-                           str(source._id), device_token)
-            # disregard any failure notifications that come back
+        # missed a Lumo request if the call was not connected upon end
+        if call_out and not call_out.connected:
+            for device in target.devices:
+                device_token = device['token']
+                notify_by_push(MISSED_CALL, source_name,
+                               str(source._id), device_token)
 
         # Close open calls
         if call_in:
