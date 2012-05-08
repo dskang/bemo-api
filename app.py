@@ -348,6 +348,9 @@ def call_end(target_id):
              'target_id': target._id,
              'complete': False})
 
+        # TODO: Send push notification saying that the target user
+        # missed a Lumo request if the call was not connected on end
+
         # Close open calls
         if call_in:
             call_in.complete = True
