@@ -251,6 +251,7 @@ def call_init(target_id):
         call = database.calls.Call()
         call.source_id = source._id
         call.source_device = unicode(device_type)
+        call.source_service = unicode(service_name)
         call.target_id = target._id
         call.time = int(time.time())
         call.save()
@@ -363,6 +364,9 @@ def call_end(target_id):
         # Send push notification saying that the target user
         # missed a Lumo request if the call was not connected upon end
         if call_out and not call_out.connected:
+            service_name = call_out.source_service;
+            service = get_service_from_user(service_name, source)
+            source_name = service['username']
             for device in target.devices:
                 device_token = device['token']
                 notify_by_push(MISSED_CALL, source_name,

@@ -29,6 +29,7 @@ class Call(Document):
     structure = {
         'source_id': objectid.ObjectId, # id of user making call
         'source_device': unicode, # type of device
+        'source_service': unicode, # name of service used to make call
         'target_id': objectid.ObjectId, # id of user receiving call
         'target_device': unicode, # type of device
         'time': int, # time that call was made
