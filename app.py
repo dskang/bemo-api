@@ -325,7 +325,6 @@ def call_receive(target_id):
         call_in = database.calls.Call.find_one(
             {'source_id': target._id,
              'target_id': source._id,
-             'connected': False,
              'complete': False})
         if not call_in:
             return jsonify({'status': 'failure', 'error': 'disconnected'})
