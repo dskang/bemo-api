@@ -211,7 +211,9 @@ def discover():
                 # Populate list with friend name and our app id
                 for friend in friends_cursor:
                     s = get_service_from_user(service['name'], friend)
-                    friends.append({'name': s['username'], 'id': str(friend['_id'])})
+                    friends.append({'name': s['username'],
+                                    'id': str(friend['_id']),
+                                    'service_id': s['id']})
 
         return jsonify({'status': 'success', 'data': friends})
 

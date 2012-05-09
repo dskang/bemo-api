@@ -30,30 +30,59 @@ A user obtains a token from each of three tiers to use the service.
 
 The only supported device is iPhone and the only supported service is Facebook.
 
-An iPhone token should be obtained using APNS (Apple Push Notifications Service). A device obtains a Rendezvous token by sending the former two tokens to the server using POST /login.
+An iPhone token should be obtained using APNS (Apple Push
+Notifications Service). A device obtains a Rendezvous token by sending
+the former two tokens to the server using POST /login.
 
 ### Authentication
 
-User authentication is distributed on the client-side. For each SSO service supported by Rendezvous (currently only Facebook), the client obtains an OAuth key and passes it to the server. The server verifies the users is properly authenticated by making a request to the service. The server then discards the Facebook authentication token, issuing the user a Rendezvous token valid for a set time.
+User authentication is distributed on the client-side. For each SSO
+service supported by Rendezvous (currently only Facebook), the client
+obtains an OAuth key and passes it to the server. The server verifies
+the users is properly authenticated by making a request to the
+service. The server then discards the Facebook authentication token,
+issuing the user a Rendezvous token valid for a set time.
 
-Friend discovery is conducted by using the server as a proxy. Friends are relayed back to the user and never stored on the server. The server stores the OAuth token as a session identifier.
+Friend discovery is conducted by using the server as a proxy. Friends
+are relayed back to the user and never stored on the server. The
+server stores the OAuth token as a session identifier.
 
-NB: This architecture scales to multiple SSO services (i.e. simultaneously logging into different services to combine contact lists) while preserving privacy. The client should POST to /login for each service that it hosts, telling the server to associate the device's ID with the SSO ID for as long as the device remains logged in.
+NB: This architecture scales to multiple SSO services (i.e.
+simultaneously logging into different services to combine contact
+lists) while preserving privacy. The client should POST to /login for
+each service that it hosts, telling the server to associate the
+device's ID with the SSO ID for as long as the device remains logged
+in.
 
 ### Notification Services
 
-At login or when refreshing the friends list, the server fetches the user's contacts and translates them to Rendezvous IDs, which are passed back to the users. Additionally, every time the list is displayed, the server is queried and looks up who is online by indexing into the sessions table.
+At login or when refreshing the friends list, the server fetches the
+user's contacts and translates them to Rendezvous IDs, which are
+passed back to the users. Additionally, every time the list is
+displayed, the server is queried and looks up who is online by
+indexing into the sessions table.
 
-When making a call, the client passes the server its ID and token. If the call is valid, a push notification is sent to the target and the call is recorded in the table. The server continues to send push notifications by checking the calls table for active calls at an interval.
+When making a call, the client passes the server its ID and token. If
+the call is valid, a push notification is sent to the target and the
+call is recorded in the table. The server continues to send push
+notifications by checking the calls table for active calls at an
+interval.
 
-When answering a call, the client opens a connection to the server and sends its lat/lon at a known interval until it disconnects or it is informed the other side has disconnected. If the client does not hang up properly, the server tells recipients the location has been lost up to the expiration time or a set timeout.
+When answering a call, the client opens a connection to the server and
+sends its lat/lon at a known interval until it disconnects or it is
+informed the other side has disconnected. If the client does not hang
+up properly, the server tells recipients the location has been lost up
+to the expiration time or a set timeout.
 
 API
 ---
 
-Data sent to the server by GET is encoded in a query string. Data sent with POST is and data returned are in JSON.
+Data sent to the server by GET is encoded in a query string. Data sent
+with POST is and data returned are in JSON.
 
-Sign in or register using an OAuth single sign-on service. The server checks your OAuth token. You get a Rendezvous user ID and a session token valid for two weeks. We only support Facebook right now.
+Sign in or register using an OAuth single sign-on service. The server
+checks your OAuth token. You get a Rendezvous user ID and a session
+token valid for two weeks. We only support Facebook right now.
 
     POST /login
     Content: {device: 'iphone', device_id: str, device_token: str,
@@ -66,7 +95,7 @@ Discover friends of a user who are also on the app.
 
     GET /friends?token=TOKEN
 
-    Returns {status: 'success', data: [ {name: str, id: str} ]}
+    Returns {status: 'success', data: [ {name: str, id: str, service_id: str} ]}
     Returns {status: 'failure', error: 'service'} if request to service fails
 
 Initiate a location call.
