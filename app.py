@@ -154,25 +154,24 @@ def login():
                 'services.id': service['id']
                 })
 
-        # Generate app token
-        app_token = md5.new(str(time.time()))
-        app_token.update(service['id'])
-        app_token = unicode(app_token.hexdigest())
-
         # Check if user exists in database
         if user_by_device or user_by_service:
             if user_by_device:
                 user = user_by_device
             else:
                 user = user_by_service
-            # Update app token
-            user.token = app_token
-            user.save()
+            # Reuse app token
+            app_token = user.token
             # Add service or update it
             add_service_to_user(service, user)
             # Add device or update it
             add_device_to_user(device, user)
         else:
+            # Generate app token
+            app_token = md5.new(str(time.time()))
+            app_token.update(service['id'])
+            app_token = unicode(app_token.hexdigest())
+
             # Add user to database
             user = database.users.User()
             user.token = app_token
