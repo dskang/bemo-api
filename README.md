@@ -95,7 +95,7 @@ Discover friends of a user who are also on the app.
 
     GET /friends?token=TOKEN
 
-    Returns {status: 'success', data: [ {name: str, id: str, service_id: str} ]}
+    Returns {status: 'success', data: [ {name: str, id: str, service: { name: str, id: str}} ]}
     Returns {status: 'failure', error: 'service'} if request to service fails
 
 Initiate a location call.
