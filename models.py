@@ -30,8 +30,10 @@ class Call(Document):
         'source_id': objectid.ObjectId, # id of user making call
         'source_device': unicode, # type of device
         'source_service': unicode, # name of service used to make call
+        'source_time': int, # time source last polled server
         'target_id': objectid.ObjectId, # id of user receiving call
         'target_device': unicode, # type of device
+        'target_time': int, # time target last polled server
         'time': int, # time that call was made
         'connected': bool, # whether call has been connected
         'complete': bool # whether call is complete

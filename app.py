@@ -13,6 +13,7 @@ MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
 DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
 CALL_RINGTIME_THRESHOLD = 60 * 60 # number of seconds until unreceived call expires
+CALL_POLL_THRESHOLD = 30 # number of seconds for which no polling results in disconnection
 LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
 
 FB_SERVICE_ID = 'facebook'
@@ -418,22 +419,32 @@ def call_poll(target_id):
                 return jsonify({'status': 'failure', 'error': 'receive call'})
             call = call_in
             target_device = call_in.source_device
+            partner_time = call_in.source_time
+            # Update time of last poll
+            call_in.target_time = int(time.time())
+            call_in.save()
         elif call_out:
             call = call_out
             target_device = call_out.target_device
+            partner_time = call_out.target_time
+            # Update time of last poll
+            call_out.source_time = int(time.time())
+            call_out.save()
         else:
             return jsonify({'status': 'failure', 'error': 'disconnected'})
 
-        # Check if call has expired
-        if not call.connected and int(time.time()) > call.time + CALL_RINGTIME_THRESHOLD:
+        # Check if call is expired or disconnected
+        now = int(time.time())
+        expired = not call.connected and now > call.time + CALL_RINGTIME_THRESHOLD
+        disconnected = call.connected and partner_time and now > partner_time + CALL_POLL_THRESHOLD
+        if expired or disconnected:
             call.complete = True
             call.save()
             return jsonify({'status': 'failure', 'error': 'disconnected'})
 
         # Check if partner has received call if outgoing call
-        if call == call_out:
-            if call_out.connected == False:
-                return jsonify({'status': 'failure', 'error': 'waiting'})
+        if call == call_out and not call_out.connected:
+            return jsonify({'status': 'failure', 'error': 'waiting'})
 
         # Return location of partner
         location = get_location(target_id, target_device)
