@@ -84,13 +84,19 @@ def add_device_to_user(device, user):
         user.devices.append(device)
         user.save()
 
-def notify_by_push(message_key, source_name, source_id, target_device_token):
+def notify_by_push(message_key, source_service, source_id, target_device_token):
     """
     Sends a push notification for an incoming call.
     Return True on success and False on failure
     """
+    source_name = source_service['username']
     if message_key == INCOMING_CALL:
-        custom = {'source_id': source_id}
+        custom = {}
+        custom['id'] = source_id
+        custom['service'] = {
+            'name': source_service['name'],
+            'id': source_service['id']
+            }
         alert = PayloadAlert(body = None,
                              action_loc_key = 'ACCEPT',
                              loc_key = message_key,
@@ -211,9 +217,13 @@ def discover():
                 # Populate list with friend name and our app id
                 for friend in friends_cursor:
                     s = get_service_from_user(service['name'], friend)
+                    friend_service = {
+                        'name': s['name'],
+                        'id': s['id']
+                        }
                     friends.append({'name': s['username'],
                                     'id': str(friend['_id']),
-                                    'service_id': s['id']})
+                                    'service': friend_service})
 
         return jsonify({'status': 'success', 'data': friends})
 
@@ -258,12 +268,10 @@ def call_init(target_id):
         call.save()
 
         # Send push notification to all of target's devices
-        service = get_service_from_user(service_name, source)
-        source_name = service['username']
+        source_service = get_service_from_user(service_name, source)
         for device in target.devices:
             device_token = device['token']
-            success = notify_by_push(INCOMING_CALL, source_name,
-                                     str(source._id), device_token)
+            success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token)
             # TODO: Decide whether we should let the caller believe that
             # the call has been started even if target uninstalled app
 
@@ -365,12 +373,10 @@ def call_end(target_id):
         # missed a Lumo request if the call was not connected upon end
         if call_out and not call_out.connected:
             service_name = call_out.source_service;
-            service = get_service_from_user(service_name, source)
-            source_name = service['username']
+            source_service = get_service_from_user(service_name, source)
             for device in target.devices:
                 device_token = device['token']
-                notify_by_push(MISSED_CALL, source_name,
-                               str(source._id), device_token)
+                notify_by_push(MISSED_CALL, source_service, str(source._id), device_token)
 
         # Close open calls
         if call_in:
