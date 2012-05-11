@@ -351,6 +351,7 @@ def call_receive(target_id):
             return jsonify({'status': 'success'})
 
     except KeyError: pass
+    except errors.InvalidId: pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/end', methods=['POST'])
@@ -395,6 +396,7 @@ def call_end(target_id):
         return jsonify({'status': 'success'})
 
     except KeyError: pass
+    except errors.InvalidId: pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/poll')
@@ -469,6 +471,7 @@ def call_poll(target_id):
         return jsonify({'status': 'success', 'data': loc_data})
 
     except KeyError: pass
+    except errors.InvalidId: pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/incoming')
