@@ -260,6 +260,7 @@ def call_init(target_id):
         call.source_id = source._id
         call.source_device = unicode(device_type)
         call.source_service = unicode(service_name)
+        call.source_time = int(time.time())
         call.target_id = target._id
         call.time = int(time.time())
         call.save()
@@ -337,6 +338,7 @@ def call_receive(target_id):
             # Receive call
             call_in.connected = True
             call_in.target_device = unicode(device)
+            call_in.target_time = int(time.time())
             call_in.save()
             return jsonify({'status': 'success'})
 
@@ -432,7 +434,7 @@ def call_poll(target_id):
         # Check if call is expired or disconnected
         now = int(time.time())
         expired = not call.connected and now > call.time + CALL_RINGTIME_THRESHOLD
-        disconnected = call.connected and partner_time and now > partner_time + CALL_POLL_THRESHOLD
+        disconnected = call.connected and now > partner_time + CALL_POLL_THRESHOLD
         if expired or disconnected:
             call.complete = True
             call.save()
