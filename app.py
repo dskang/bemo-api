@@ -109,10 +109,10 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
         # Send notification
         apns.gateway_server.send_notification(target_device_token, payload)
     except TypeError:
-        print "{0} ({1}) has an invalid device token for push notifications".format(source_name, source_id)
+        print "Error: Invalid device token for receiving push notifications: {0}".format(target_device_token)
         return False
     except:
-        print "Unexpected error sending push notification:"
+        print "Error: Unexpected error sending push notification"
         traceback.print_exc()
         return False
 
