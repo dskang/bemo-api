@@ -3,7 +3,7 @@ from mongokit import Connection
 from pymongo import objectid, errors
 from models import User, Call, Location
 from apns import APNs, Payload, PayloadAlert
-import os, requests, urlparse, json, time, md5, sys
+import os, requests, urlparse, json, time, md5, sys, traceback
 
 app = Flask(__name__)
 
@@ -105,8 +105,16 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
                              loc_args = [source_name])
         payload = Payload(alert=alert, sound="default")
 
-    # Send notification
-    apns.gateway_server.send_notification(target_device_token, payload)
+    try:
+        # Send notification
+        apns.gateway_server.send_notification(target_device_token, payload)
+    except TypeError:
+        print "{0} ({1}) has an invalid device token for push notifications".format(source_name, source_id)
+        return False
+    except:
+        print "Unexpected error sending push notification:"
+        traceback.print_exc()
+        return False
 
     # Get feedback messages
     for (token_hex, fail_time) in apns.feedback_server.items():
