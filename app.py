@@ -38,10 +38,7 @@ def get_location(user_id, device):
             'user_id': user_id,
             'device': device
             })
-    if int(time.time()) - location.time <= LOC_TIME_THRESHOLD:
-        return location
-    else:
-        return None
+    return location
 
 def get_service_from_user(service_name, user):
     """Return a service from user using service_name"""
@@ -445,16 +442,15 @@ def call_poll(target_id):
         if call == call_out and not call_out.connected:
             return jsonify({'status': 'failure', 'error': 'waiting'})
 
-        # Return location of partner
+        # Return location of partner if it's still recent
         location = get_location(target_id, target_device)
-        if location:
+        if location and int(time.time()) <= location.time + LOC_TIME_THRESHOLD:
             loc_data = {
                 'latitude': location.lat,
                 'longitude': location.lon
                 }
         else:
             # Return fake location until we receive real one
-            # FIXME: Avoid returning fake data!
             loc_data = {
                 'latitude': 0,
                 'longitude': 0
