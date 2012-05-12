@@ -96,11 +96,13 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
             'id': source_service['id']
             }
         alert = PayloadAlert(body = None,
+                             action_loc_key = 'VIEW',
                              loc_key = message_key,
                              loc_args = [source_name])
         payload = Payload(alert=alert, sound="default", custom=custom)
     elif message_key == MISSED_CALL:
         alert = PayloadAlert(body = None,
+                             action_loc_key = 'OK',
                              loc_key = message_key,
                              loc_args = [source_name])
         payload = Payload(alert=alert, sound="default")
