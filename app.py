@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from mongokit import Connection
 from pymongo import objectid, errors
 from models import User, Call, Location
+import apns
 from apns import APNs, Payload, PayloadAlert
 import os, requests, urlparse, json, time, md5, sys, traceback
 
@@ -109,17 +110,18 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
 
     try:
         # Send notification
-        apns.gateway_server.send_notification(target_device_token, payload)
+        apns_conn.gateway_server.send_notification(target_device_token, payload)
     except TypeError:
         print "Error: Invalid device token for receiving push notifications: {0}".format(target_device_token)
         return False
     except:
         print "Error: Unexpected error sending push notification"
         traceback.print_exc()
+        reload(apns)
         return False
 
     # Get feedback messages
-    for (token_hex, fail_time) in apns.feedback_server.items():
+    for (token_hex, fail_time) in apns_conn.feedback_server.items():
         # TODO: Use fail_time to determine if user reregistered
         # device after push failed (cannot support with current DB
         # structure)
@@ -506,7 +508,7 @@ def hello():
 if __name__ == "__main__":
     try:
         # Connect to APNs
-        apns = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-dev-key.pem')
+        apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-dev-key.pem')
     except:
         print "Error: Unable to connect to APNs"
         sys.exit(1)
