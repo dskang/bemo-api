@@ -284,6 +284,8 @@ def call_init(target_id):
             success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token)
             # TODO: Decide whether we should let the caller believe that
             # the call has been started even if target uninstalled app
+            if not success:
+                return jsonify({'status': 'failure', 'error': 'invalid'})
 
         return jsonify({'status': 'success'})
 
