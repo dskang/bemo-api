@@ -117,6 +117,8 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     except:
         print "Error: Unexpected error sending push notification"
         traceback.print_exc()
+        # FIXME: Attempt to handle bug in Python's SSL module
+        # SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
         reload(apns)
         return False
 
@@ -279,13 +281,14 @@ def call_init(target_id):
 
         # Send push notification to all of target's devices
         source_service = get_service_from_user(service_name, source)
+        push_success = False
         for device in target.devices:
             device_token = device['token']
-            success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token)
-            # TODO: Decide whether we should let the caller believe that
-            # the call has been started even if target uninstalled app
-            if not success:
-                return jsonify({'status': 'failure', 'error': 'invalid'})
+            push_success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token) or push_success
+
+        # Return invalid if unable to notify any of target's devices
+        if not push_success:
+            return jsonify({'status': 'failure', 'error': 'invalid'})
 
         return jsonify({'status': 'success'})
 
