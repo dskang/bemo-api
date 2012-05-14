@@ -1,5 +1,5 @@
 from mongokit import Document
-from pymongo import objectid
+from bson import objectid
 
 class User(Document):
     structure = {

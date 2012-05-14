@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from mongokit import Connection
-from pymongo import objectid, errors
+from bson import objectid
+from pymongo import errors
 from models import User, Call, Location
 import apns
 from apns import APNs, Payload, PayloadAlert
