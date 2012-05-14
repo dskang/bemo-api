@@ -1,6 +1,7 @@
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
+import tornado.options
 
 from flask import Flask, request, jsonify
 from mongokit import Connection
@@ -532,6 +533,8 @@ if __name__ == "__main__":
         print "Error: Unable to connect to database"
         sys.exit(1)
 
+    # Parse command line options
+    tornado.options.parse_command_line()
     # Start the server
     http_server = HTTPServer(WSGIContainer(app))
     port = int(os.environ.get("PORT", 5000))
