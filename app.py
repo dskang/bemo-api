@@ -528,6 +528,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Start the server
-    app.debug = True
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
