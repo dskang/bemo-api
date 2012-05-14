@@ -1,10 +1,15 @@
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+
 from flask import Flask, request, jsonify
 from mongokit import Connection
 from bson import objectid, errors
-from models import User, Call, Location
 import apns
 from apns import APNs, Payload, PayloadAlert
 import os, requests, urlparse, json, time, md5, sys, traceback
+
+from models import User, Call, Location
 
 app = Flask(__name__)
 
@@ -528,5 +533,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Start the server
+    http_server = HTTPServer(WSGIContainer(app))
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    http_server.listen(port)
+    IOLoop.instance().start()
