@@ -118,11 +118,11 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
         # Send notification
         apns_conn.gateway_server.send_notification(target_device_token, payload)
     except TypeError:
-        print "Error: Invalid device token for receiving push notifications: {0}".format(target_device_token)
+        app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
     except:
-        print "Error: Unexpected error sending push notification"
-        traceback.print_exc()
+        app.logger.error("Unexpected error sending push notification")
+        app.logger.error(traceback.format_exc())
         # FIXME: Attempt to handle bug in Python's SSL module
         # SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
         reload(apns)
@@ -521,7 +521,7 @@ if __name__ == "__main__":
         # Connect to APNs
         apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-dev-key.pem')
     except:
-        print "Error: Unable to connect to APNs"
+        app.logger.error("Unable to connect to APNs")
         sys.exit(1)
 
     try:
@@ -530,7 +530,7 @@ if __name__ == "__main__":
         connection.register([User, Call, Location])
         database = connection[DATABASE_NAME]
     except:
-        print "Error: Unable to connect to database"
+        app.logger.error("Unable to connect to database")
         sys.exit(1)
 
     # Parse command line options
