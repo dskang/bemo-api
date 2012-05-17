@@ -514,7 +514,7 @@ def incoming():
 @app.route('/')
 def hello():
     return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' +
-           'font-weight: 100; text-align: center; margin: 20px 0;">Rendezvous</div>')
+           'font-weight: 100; text-align: center; margin: 20px 0;">Lumo</div>')
 
 if __name__ == "__main__":
     try:
