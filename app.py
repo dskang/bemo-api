@@ -222,7 +222,7 @@ def discover():
                 # Request entire friends list
                 r = requests.get('https://graph.facebook.com/me/friends?access_token={0}&limit=5000'.format(service['token']))
                 if r.status_code != 200:
-                    return jsonify({'status': 'failure', 'error': 'auth'})
+                    return jsonify({'status': 'failure', 'error': 'service'})
                 result = json.loads(r.text)
                 # Grab Facebook IDs of friends
                 friend_ids = [friend['id'] for friend in result['data']]
