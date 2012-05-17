@@ -74,7 +74,7 @@ token valid for two weeks. We only support Facebook right now.
               service: 'facebook', service_token: str}
 
     Returns {status: 'success', data: { token: str}}
-    Returns {status: 'failure', error: 'auth'} if OAuth fails
+    Returns {status: 'failure', error: 'service'} if Facebook auth fails
 
 Discover friends of a user who are also on the app.
 

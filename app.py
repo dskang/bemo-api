@@ -159,7 +159,7 @@ def login():
         if service['name'] == FB_SERVICE_ID:
             r = requests.get('https://graph.facebook.com/me?access_token={0}'.format(service['token']))
             if r.status_code != 200:
-                return jsonify({'status': 'failure', 'error': 'auth'})
+                return jsonify({'status': 'failure', 'error': 'service'})
             # Parse FB response
             results = json.loads(r.text)
             service['username'] = unicode(results['name'])
