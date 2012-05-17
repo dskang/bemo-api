@@ -2,21 +2,6 @@
 Backend Architecture
 ====================
 
-Contact: [Raymond](raymondz@princeton.edu) is responsible for this document.
-
-App ID/API Key
-
-    407078449305300
-
-App Secret
-
-    8e4fcedc28a2705b8183b42bd5fe81c0
-
-App Namespace
-
-    rendezvous_princeton
-
-
 Service Architecture
 --------------------
 
@@ -31,17 +16,17 @@ A user obtains a token from each of three tiers to use the service.
 The only supported device is iPhone and the only supported service is Facebook.
 
 An iPhone token should be obtained using APNS (Apple Push
-Notifications Service). A device obtains a Rendezvous token by sending
+Notifications Service). A device obtains a Lumo token by sending
 the former two tokens to the server using POST /login.
 
 ### Authentication
 
 User authentication is distributed on the client-side. For each SSO
-service supported by Rendezvous (currently only Facebook), the client
+service supported by Lumo (currently only Facebook), the client
 obtains an OAuth key and passes it to the server. The server verifies
 the users is properly authenticated by making a request to the
 service. The server then discards the Facebook authentication token,
-issuing the user a Rendezvous token valid for a set time.
+issuing the user a Lumo token valid for a set time.
 
 Friend discovery is conducted by using the server as a proxy. Friends
 are relayed back to the user and never stored on the server. The
@@ -57,7 +42,7 @@ in.
 ### Notification Services
 
 At login or when refreshing the friends list, the server fetches the
-user's contacts and translates them to Rendezvous IDs, which are
+user's contacts and translates them to Lumo IDs, which are
 passed back to the users. Additionally, every time the list is
 displayed, the server is queried and looks up who is online by
 indexing into the sessions table.
@@ -81,7 +66,7 @@ Data sent to the server by GET is encoded in a query string. Data sent
 with POST is and data returned are in JSON.
 
 Sign in or register using an OAuth single sign-on service. The server
-checks your OAuth token. You get a Rendezvous user ID and a session
+checks your OAuth token. You get a Lumo user ID and a session
 token valid for two weeks. We only support Facebook right now.
 
     POST /login
