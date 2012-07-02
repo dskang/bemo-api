@@ -34,9 +34,9 @@ def get_user_by_token(token):
     user = database.users.User.find_one({'token': token})
     return user
 
-def get_user_by_id(id):
+def get_user_by_id(user_id):
     """Return user for given id"""
-    user = database.users.User.find_one({'_id': id})
+    user = database.users.User.find_one({'_id': user_id})
     return user
 
 def get_location(user_id, device):
@@ -113,6 +113,9 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
                              loc_key = message_key,
                              loc_args = [source_name])
         payload = Payload(alert=alert, sound="default")
+    elif message_key == None:
+        # Send empty payload
+        payload = Payload(sound="default")
 
     try:
         # Send notification
@@ -204,7 +207,8 @@ def login():
 
         return jsonify({'status': 'success', 'data': {'token': app_token}})
 
-    except KeyError: pass
+    except KeyError:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/friends', methods=['GET'])
@@ -214,7 +218,8 @@ def discover():
         token = request.args['token']
 
         user = get_user_by_token(token)
-        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not user:
+            return jsonify({'status': 'failure', 'error': 'auth'})
 
         friends = []
         for service in user.services:
@@ -244,7 +249,8 @@ def discover():
 
         return jsonify({'status': 'success', 'data': friends})
 
-    except KeyError: pass
+    except KeyError:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/init', methods=['POST'])
@@ -258,10 +264,12 @@ def call_init(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not source:
+            return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
-        if not target: raise KeyError
+        if not target:
+            raise KeyError
 
         # Invalidate previous calls
         database.calls.find_and_modify(
@@ -291,6 +299,10 @@ def call_init(target_id):
         for device in target.devices:
             device_token = device['token']
             push_success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token) or push_success
+            time.sleep(2)
+            push_success = notify_by_push(None, source_service, str(source._id), device_token) or push_success
+            time.sleep(2)
+            push_success = notify_by_push(None, source_service, str(source._id), device_token) or push_success
 
         # Return invalid if unable to notify any of target's devices
         if not push_success:
@@ -298,9 +310,12 @@ def call_init(target_id):
 
         return jsonify({'status': 'success'})
 
-    except KeyError: pass
-    except TypeError: pass
-    except errors.InvalidId: pass
+    except KeyError:
+        pass
+    except TypeError:
+        pass
+    except errors.InvalidId:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/location/update', methods=['POST'])
@@ -314,7 +329,8 @@ def location_update():
 
         # Determine user
         user = get_user_by_token(token)
-        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not user:
+            return jsonify({'status': 'failure', 'error': 'auth'})
 
         # Check for existing location
         loc = database.locations.Location.find_one(
@@ -333,7 +349,9 @@ def location_update():
         loc.save()
         return jsonify({'status': 'success'})
 
-    except KeyError: pass
+    except KeyError:
+        pass
+
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/receive', methods=['POST'])
@@ -345,10 +363,12 @@ def call_receive(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not source:
+            return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
-        if not target: raise KeyError
+        if not target:
+            raise KeyError
 
         # Check for incoming call
         call_in = database.calls.Call.find_one(
@@ -365,8 +385,10 @@ def call_receive(target_id):
             call_in.save()
             return jsonify({'status': 'success'})
 
-    except KeyError: pass
-    except errors.InvalidId: pass
+    except KeyError:
+        pass
+    except errors.InvalidId:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/end', methods=['POST'])
@@ -377,10 +399,12 @@ def call_end(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not source:
+            return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
-        if not target: raise KeyError
+        if not target:
+            raise KeyError
 
         # Check for calls
         call_in = database.calls.Call.find_one(
@@ -395,7 +419,7 @@ def call_end(target_id):
         # Send push notification saying that the target user
         # missed a Lumo request if the call was not connected upon end
         if call_out and not call_out.connected:
-            service_name = call_out.source_service;
+            service_name = call_out.source_service
             source_service = get_service_from_user(service_name, source)
             for device in target.devices:
                 device_token = device['token']
@@ -410,8 +434,10 @@ def call_end(target_id):
             call_out.save()
         return jsonify({'status': 'success'})
 
-    except KeyError: pass
-    except errors.InvalidId: pass
+    except KeyError:
+        pass
+    except errors.InvalidId:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/call/<target_id>/poll')
@@ -422,10 +448,12 @@ def call_poll(target_id):
 
         # Determine source and target
         source = get_user_by_token(token)
-        if not source: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not source:
+            return jsonify({'status': 'failure', 'error': 'auth'})
         target_id = objectid.ObjectId(target_id)
         target = get_user_by_id(target_id)
-        if not target: raise KeyError
+        if not target:
+            raise KeyError
 
         # Check for incoming and outgoing calls
         call_in = database.calls.Call.find_one(
@@ -485,8 +513,10 @@ def call_poll(target_id):
 
         return jsonify({'status': 'success', 'data': loc_data})
 
-    except KeyError: pass
-    except errors.InvalidId: pass
+    except KeyError:
+        pass
+    except errors.InvalidId:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/incoming')
@@ -496,7 +526,8 @@ def incoming():
         token = request.args['token']
 
         user = get_user_by_token(token)
-        if not user: return jsonify({'status': 'failure', 'error': 'auth'})
+        if not user:
+            return jsonify({'status': 'failure', 'error': 'auth'})
 
         call = database.calls.Call.find_one({
                 'target_id': user._id,
