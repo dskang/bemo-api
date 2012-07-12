@@ -1,0 +1,59 @@
+# Local development
+MONGOLAB_URI = "mongodb://heroku_app4271111:sflocoihgsumtuen3en65a9b9j@ds033067.mongolab.com:33067/heroku_app4271111"
+MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
+MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
+
+# Authenticate
+USER = 'heroku_app4271111'
+PASSWORD = 'sflocoihgsumtuen3en65a9b9j'
+connection['admin'].authenticate(USER, PASSWORD)
+
+# DK Info
+APNS_TOKEN = "d8cddf13e61d4569348e7dbffc2d7a469c2a957c209c4ebd4be9ae387cd2c88c"
+
+# Login
+curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "device_id":"abc", "device_token":"123", "service_token":"AAACEdEose0cBAIBIQZB2jWVziqLl3hItP3eJP23fE2DmbP1QVxtkTfrA6QZBFQVJrLcvN1fK8deLOhLSaiJIpEZCknq6iC0lXauMSSC6OfzodjrJdSe"}' http://localhost:5000/login
+
+# Discover friends
+curl -v http://localhost:5000/friends?token=b113b00be612ded083e8c0a42729c141
+
+# Initiate call
+curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/init
+
+# Receive call
+curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/receive
+
+# End call
+curl -v -H "Content-Type: application/json" -X POST -d '{"token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/end
+
+# Poll for location
+curl -v http://localhost:5000/call/4fb01e09a486bd0007000032/poll?token=b113b00be612ded083e8c0a42729c141
+
+# Incoming
+curl -v http://localhost:5000/incoming?token=b113b00be612ded083e8c0a42729c141
+
+# Testing
+import sys
+sys.path.append('/Users/dskang/Dropbox/code/lumo_api')
+
+from mongokit import Connection
+from models import User, Call, Location
+import urlparse
+
+MONGOLAB_URI = 'mongodb://heroku_app4271111:sflocoihgsumtuen3en65a9b9j@ds033067.mongolab.com:33067/heroku_app4271111'
+MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
+MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
+DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
+
+connection = Connection(MONGODB_HOST, MONGODB_PORT)
+connection.register([User, Call, Location])
+database = connection[DATABASE_NAME]
+
+user = database.users.User()
+user.token = u'FAKE_LUMO_TOKEN'
+user.services.append({"name":u"facebook", "username":u"Meow Mix", "id":u"123", "token":u"FAKE_FB_TOKEN"})
+user.save()
+database.users.User.find_one({'services.name':u'facebook', 'services.id':u'123'})
+
+# Only return services.id
+database.users.User.find_one({'services.name':u'facebook', 'services.id':u'123'}, {'services.id':1})
