@@ -299,10 +299,7 @@ def call_init(target_id):
         for device in target.devices:
             device_token = device['token']
             push_success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token) or push_success
-            time.sleep(5)
-            push_success = notify_by_push(None, source_service, str(source._id), device_token) or push_success
-            time.sleep(5)
-            push_success = notify_by_push(None, source_service, str(source._id), device_token) or push_success
+            # TODO: Send multiple notifications
 
         # Return invalid if unable to notify any of target's devices
         if not push_success:
