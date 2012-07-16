@@ -86,8 +86,7 @@ Discover friends of a user who are also on the app.
 Initiate a location call.
 
     POST /call/:target_id/init
-    Content: {device: 'iphone',
-              service: 'facebook',
+    Content: {service: 'facebook',
               token: str}
 
     Returns {status: 'success'} if request successfully placed
@@ -96,8 +95,7 @@ Initiate a location call.
 Receive a location call.
 
     POST /call/:target_id/receive
-    Content: {device: 'iphone', # device you're receiving from
-              token: str}
+    Content: {token: str}
 
     Returns {status: 'success'} if call successfully received
     Returns {status: 'failure', error: 'disconnected'} if other user disconnected
@@ -114,10 +112,9 @@ End a location call.
 Update location.
 
     POST /location/update
-    Content: {device: 'iphone',
+    Content: {token: str,
               latitude: float,
-              longitude: float,
-              token: str}
+              longitude: float}
 
     Returns {status: 'success'} if location successfully updated
     Returns {status: 'failure', error: 'auth'} if not authorized
@@ -159,9 +156,7 @@ User
 Call
 
     'source_id': objectid.ObjectId, # id of user making call
-    'source_device': unicode, # type of device
     'target_id': objectid.ObjectId, # id of user receiving call
-    'target_device': unicode, # type of device
     'expires': int, # expiration of call
     'connected': bool, # whether call has been connected
     'complete': bool # whether call is complete
@@ -169,7 +164,6 @@ Call
 Location
 
     'user_id': objectid.ObjectId, # user's app id
-    'device': unicode, # type of device
     'lat': float, # latitude
     'lon': float, # longitude
     'time': int # time location was recorded

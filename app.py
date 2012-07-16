@@ -39,11 +39,10 @@ def get_user_by_id(user_id):
     user = database.users.User.find_one({'_id': user_id})
     return user
 
-def get_location(user_id, device):
-    """Return location of user for given user id and device type"""
+def get_location(user_id):
+    """Return location of user for given user id"""
     location = database.locations.Location.find_one({
-            'user_id': user_id,
-            'device': device
+            'user_id': user_id
             })
     return location
 
@@ -258,7 +257,6 @@ def call_init(target_id):
     """Initiate the call"""
     try:
         # Parse request
-        device_type = request.json['device']
         token = request.json['token']
         service_name = request.json['service']
 
@@ -286,7 +284,6 @@ def call_init(target_id):
         # Create call
         call = database.calls.Call()
         call.source_id = source._id
-        call.source_device = unicode(device_type)
         call.source_service = unicode(service_name)
         call.source_time = int(time.time())
         call.target_id = target._id
@@ -319,7 +316,6 @@ def call_init(target_id):
 def location_update():
     """Update location of user"""
     try:
-        device = request.json['device']
         token = request.json['token']
         lat = request.json['latitude']
         lon = request.json['longitude']
@@ -330,14 +326,11 @@ def location_update():
             return jsonify({'status': 'failure', 'error': 'auth'})
 
         # Check for existing location
-        loc = database.locations.Location.find_one(
-            {'user_id': user._id,
-             'device': device})
+        loc = get_location(user._id)
         if not loc:
             # Create location
             loc = database.locations.Location()
             loc.user_id = user._id
-            loc.device = device
 
         # Update location
         loc.lat = float(lat)
@@ -355,7 +348,6 @@ def location_update():
 def call_receive(target_id):
     """Connect user with an incoming call from target_id"""
     try:
-        device = request.json['device']
         token = request.json['token']
 
         # Determine source and target
@@ -377,7 +369,6 @@ def call_receive(target_id):
         else:
             # Receive call
             call_in.connected = True
-            call_in.target_device = unicode(device)
             call_in.target_time = int(time.time())
             call_in.save()
             return jsonify({'status': 'success'})
@@ -466,14 +457,12 @@ def call_poll(target_id):
             if not call_in.connected:
                 return jsonify({'status': 'failure', 'error': 'receive call'})
             call = call_in
-            target_device = call_in.source_device
             partner_time = call_in.source_time
             # Update time of last poll
             call_in.target_time = int(time.time())
             call_in.save()
         elif call_out:
             call = call_out
-            target_device = call_out.target_device
             partner_time = call_out.target_time
             # Update time of last poll
             call_out.source_time = int(time.time())
@@ -495,7 +484,7 @@ def call_poll(target_id):
             return jsonify({'status': 'failure', 'error': 'waiting'})
 
         # Return location of partner if it's still recent
-        location = get_location(target_id, target_device)
+        location = get_location(target_id)
         if location and int(time.time()) <= location.time + LOC_TIME_THRESHOLD:
             loc_data = {
                 'latitude': location.lat,
