@@ -138,7 +138,8 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
 
         # TODO: Remove device if appropriate and remove user if he
         # has no more devices
-        return False
+        app.logger.warning("Feedback server returned failure")
+        # return False
 
     return True
 
