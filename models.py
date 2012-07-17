@@ -42,9 +42,9 @@ class Call(Document):
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Call from {0} to {1} expiring at {2}>'.format(self.source_user,
-                                                               self.target_user,
-                                                               self.expires)
+        return '<Call from {0} to {1} started at {2}>'.format(self.source_id,
+                                                               self.target_id,
+                                                               self.time)
 
 class Location(Document):
     structure = {
@@ -57,4 +57,4 @@ class Location(Document):
 
     use_dot_notation = True
     def __repr__(self):
-        return '<Location of {0} at {1}>'.format(self.device_token, self.time)
+        return '<Location of {0} at {1}>'.format(self.user_id, self.time)
