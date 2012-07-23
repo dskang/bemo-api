@@ -3,7 +3,6 @@ from mongokit import Connection
 from bson import objectid, errors
 from apns import APNs, Payload, PayloadAlert
 import os, requests, urlparse, json, time, md5, sys, traceback
-from ssl import SSLError
 
 from models import User, Call, Location
 
@@ -122,7 +121,7 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
-    except (IOError, SSLError):
+    except IOError:
         app.logger.error("Unexpected error sending push notification")
         app.logger.error(traceback.format_exc())
         # Reconnect to APNS
