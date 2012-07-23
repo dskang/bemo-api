@@ -3,6 +3,7 @@ from mongokit import Connection
 from bson import objectid, errors
 from apns import APNs, Payload, PayloadAlert
 import os, requests, urlparse, json, time, md5, sys, traceback
+from ssl import SSLError
 
 from models import User, Call, Location
 
@@ -122,11 +123,20 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
-    except:
+    except SSLError:
         app.logger.error("Unexpected error sending push notification")
         app.logger.error(traceback.format_exc())
         # FIXME: SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
+        # Reconnect to APNS
+        if BEMO_ENV == STAGING:
+            apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
+        elif BEMO_ENV == PRODUCTION:
+            apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
+        else:
+            raise Exception('Unknown BEMO_ENV: {}'.format(BEMO_ENV))
         return False
+    except:
+        app.logger.error("Fail.")
 
     # Get feedback messages
     for (token_hex, fail_time) in apns_conn.feedback_server.items():
