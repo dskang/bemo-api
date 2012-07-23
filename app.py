@@ -1,8 +1,3 @@
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-import tornado.options
-
 from flask import Flask, request, jsonify
 from mongokit import Connection
 from bson import objectid, errors
@@ -18,6 +13,11 @@ MONGOLAB_URI = os.environ['MONGOLAB_URI']
 MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
 MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
 DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
+
+# Environment
+BEMO_ENV = os.environ['BEMO_ENV']
+STAGING = 'staging'
+PRODUCTION = 'production'
 
 CALL_RINGTIME_THRESHOLD = 60 * 60 # number of seconds until unreceived call expires
 CALL_POLL_THRESHOLD = 30 # number of seconds for which no polling results in disconnection
@@ -552,10 +552,19 @@ if __name__ == "__main__":
         app.logger.error("Unable to connect to database")
         sys.exit(1)
 
-    # Parse command line options
-    tornado.options.parse_command_line()
-    # Start the server
-    http_server = HTTPServer(WSGIContainer(app))
     port = int(os.environ.get("PORT", 5000))
-    http_server.listen(port)
-    IOLoop.instance().start()
+    if port == 5000:
+        app.run(debug=True)
+    else:
+        # Use Tornado in production
+        from tornado.wsgi import WSGIContainer
+        from tornado.httpserver import HTTPServer
+        from tornado.ioloop import IOLoop
+        import tornado.options
+
+        # Parse command line options
+        tornado.options.parse_command_line()
+        # Start the server
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(port)
+        IOLoop.instance().start()
