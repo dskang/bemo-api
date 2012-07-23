@@ -18,8 +18,6 @@ curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "ser
 curl -v http://localhost:5000/friends?token=b113b00be612ded083e8c0a42729c141
 
 # Initiate call
-curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/init
-# Prod
 curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "token":"d5218d69639b3b70540394c68adb5efd"}' http://localhost:5000/call/5008a196c35719000200000c/init
 
 # Receive call
