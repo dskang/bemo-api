@@ -93,8 +93,6 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     Sends a push notification for an incoming call.
     Return True on success and False on failure
     """
-    global apns_conn
-
     source_name = source_service['username']
     if message_key == INCOMING_CALL:
         custom = {}
@@ -128,14 +126,8 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     except SSLError:
         app.logger.error("Unexpected error sending push notification")
         app.logger.error(traceback.format_exc())
-        # FIXME: SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
         # Reconnect to APNS
-        if BEMO_ENV == STAGING:
-            apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
-        elif BEMO_ENV == PRODUCTION:
-            apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
-        else:
-            raise Exception('Unknown BEMO_ENV: {}'.format(BEMO_ENV))
+        connect_to_apns()
         return False
     except:
         app.logger.error("Fail.")
@@ -544,8 +536,10 @@ def hello():
     return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' +
            'font-weight: 100; text-align: center; margin: 20px 0;">Bemo</div>')
 
-if __name__ == "__main__":
-    # Connect to APNs
+def connect_to_apns():
+    """Connect to APNS"""
+    global apns_conn
+
     if BEMO_ENV == STAGING:
         apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
     elif BEMO_ENV == PRODUCTION:
@@ -553,11 +547,16 @@ if __name__ == "__main__":
     else:
         raise Exception('Unknown BEMO_ENV: {}'.format(BEMO_ENV))
 
-    # Connect to database
+def connect_to_db():
+    """Connect to database"""
+    global database
+
     connection = Connection(MONGODB_HOST, MONGODB_PORT)
     connection.register([User, Call, Location])
     database = connection[DATABASE_NAME]
 
+def start_server():
+    """Start the server"""
     port = int(os.environ.get("PORT", 5000))
     if port == 5000:
         app.run(debug=True)
@@ -574,3 +573,8 @@ if __name__ == "__main__":
         http_server = HTTPServer(WSGIContainer(app))
         http_server.listen(port)
         IOLoop.instance().start()
+
+if __name__ == "__main__":
+    connect_to_apns()
+    connect_to_db()
+    start_server()
