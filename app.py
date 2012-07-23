@@ -535,26 +535,18 @@ def hello():
            'font-weight: 100; text-align: center; margin: 20px 0;">Lumo</div>')
 
 if __name__ == "__main__":
-    try:
-        # Connect to APNs
-        if BEMO_ENV == STAGING:
-            apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
-        elif BEMO_ENV == PRODUCTION:
-            apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
-        else:
-            app.logger.error("Unknown BEMO_ENV: {}".format(BEMO_ENV))
-    except:
-        app.logger.error("Unable to connect to APNs")
-        sys.exit(1)
+    # Connect to APNs
+    if BEMO_ENV == STAGING:
+        apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
+    elif BEMO_ENV == PRODUCTION:
+        apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
+    else:
+        raise Exception('Unknown BEMO_ENV: {}'.format(BEMO_ENV))
 
-    try:
-        # Connect to database
-        connection = Connection(MONGODB_HOST, MONGODB_PORT)
-        connection.register([User, Call, Location])
-        database = connection[DATABASE_NAME]
-    except:
-        app.logger.error("Unable to connect to database")
-        sys.exit(1)
+    # Connect to database
+    connection = Connection(MONGODB_HOST, MONGODB_PORT)
+    connection.register([User, Call, Location])
+    database = connection[DATABASE_NAME]
 
     port = int(os.environ.get("PORT", 5000))
     if port == 5000:
