@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from mongokit import Connection
 from bson import objectid, errors
-import apns
 from apns import APNs, Payload, PayloadAlert
 import os, requests, urlparse, json, time, md5, sys, traceback
 
@@ -119,15 +118,14 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     try:
         # Send notification
         apns_conn.gateway_server.send_notification(target_device_token, payload)
+        app.logger.debug("Sent push notification.")
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
     except:
         app.logger.error("Unexpected error sending push notification")
         app.logger.error(traceback.format_exc())
-        # FIXME: Attempt to handle bug in Python's SSL module
-        # SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
-        reload(apns)
+        # FIXME: SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
         return False
 
     # Get feedback messages
