@@ -537,7 +537,8 @@ def hello():
 if __name__ == "__main__":
     try:
         # Connect to APNs
-        apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-dev-key.pem')
+        apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
+        # apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
     except:
         app.logger.error("Unable to connect to APNs")
         sys.exit(1)

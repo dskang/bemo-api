@@ -3,6 +3,7 @@
 - Bemo.certSigningRequest: CSR used for creating Development Push SSL Certificate
 - bemo_key.p12: Exported version of Bemo private key
 - bemo_dev_ssl_cert.cer: SSL certificate for Bemo Development Push
+- bemo_prod_ssl_cert.cer: SSL certificate for Bemo Production Push
 
 ## Creating PEM files
 
