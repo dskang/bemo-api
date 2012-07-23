@@ -128,6 +128,7 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
         app.logger.error(traceback.format_exc())
         # FIXME: SSLError: [Errno 1] _ssl.c:1237: error:1409F07F:SSL routines:SSL3_WRITE_PENDING:bad write retry
         # Reconnect to APNS
+        global apns_conn
         if BEMO_ENV == STAGING:
             apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
         elif BEMO_ENV == PRODUCTION:
