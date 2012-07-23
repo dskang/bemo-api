@@ -112,7 +112,8 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
 
     try:
         # Send notification
-        apns_conn.gateway_server.send_notification(target_device_token, payload)
+        apns_dev.gateway_server.send_notification(target_device_token, payload)
+        apns_prod.gateway_server.send_notification(target_device_token, payload)
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
@@ -120,18 +121,21 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
         app.logger.warning("Broken connection to APNS: {}".format(e))
         # Reconnect to APNS
         connect_to_apns()
-        return False
+        # return False
 
     # Get feedback messages
-    for (token_hex, fail_time) in apns_conn.feedback_server.items():
+    for (token_hex, fail_time) in apns_dev.feedback_server.items():
         # TODO: Use fail_time to determine if user reregistered
         # device after push failed (cannot support with current DB
         # structure)
 
         # TODO: Remove device if appropriate and remove user if he
         # has no more devices
-        app.logger.warning("Feedback server returned failure")
+        app.logger.warning("Dev feedback server returned failure")
         # return False
+
+    for (token_hex, fail_time) in apns_prod.feedback_server.items():
+        app.logger.warning("Prod feedback server returned failure")
 
     return True
 
@@ -528,14 +532,11 @@ def hello():
 
 def connect_to_apns():
     """Connect to APNS"""
-    global apns_conn
+    global apns_dev
+    global apns_prod
 
-    if BEMO_ENV == STAGING:
-        apns_conn = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
-    elif BEMO_ENV == PRODUCTION:
-        apns_conn = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
-    else:
-        raise Exception('Unknown BEMO_ENV: {}'.format(BEMO_ENV))
+    apns_dev = APNs(use_sandbox=True, cert_file='apns-dev-cert.pem', key_file='apns-key.pem')
+    apns_prod = APNs(use_sandbox=False, cert_file='apns-prod-cert.pem', key_file='apns-key.pem')
 
 def connect_to_db():
     """Connect to database"""
