@@ -8,11 +8,6 @@ from models import User, Call, Location
 
 app = Flask(__name__)
 
-MONGOLAB_URI = os.environ['MONGOLAB_URI']
-MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
-MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
-DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
-
 # Environment
 BEMO_ENV = os.environ['BEMO_ENV']
 STAGING = 'staging'
@@ -121,9 +116,8 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
-    except IOError:
-        app.logger.error("Unexpected error sending push notification")
-        app.logger.error(traceback.format_exc())
+    except IOError as e:
+        app.logger.warning("Broken connection to APNS: {}".format(e))
         # Reconnect to APNS
         connect_to_apns()
         return False
@@ -546,6 +540,11 @@ def connect_to_apns():
 def connect_to_db():
     """Connect to database"""
     global database
+
+    MONGOLAB_URI = os.environ['MONGOLAB_URI']
+    MONGODB_HOST = urlparse.urlparse(MONGOLAB_URI).geturl()
+    MONGODB_PORT = urlparse.urlparse(MONGOLAB_URI).port
+    DATABASE_NAME = urlparse.urlparse(MONGOLAB_URI).path[1:]
 
     connection = Connection(MONGODB_HOST, MONGODB_PORT)
     connection.register([User, Call, Location])
