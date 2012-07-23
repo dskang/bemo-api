@@ -119,18 +119,15 @@ def notify_by_push(message_key, source_service, source_id, target_device_token):
     try:
         # Send notification
         apns_conn.gateway_server.send_notification(target_device_token, payload)
-        app.logger.debug("Sent push notification.")
     except TypeError:
         app.logger.warning("Invalid device token for receiving push notifications: {0}".format(target_device_token))
         return False
-    except SSLError:
+    except (IOError, SSLError):
         app.logger.error("Unexpected error sending push notification")
         app.logger.error(traceback.format_exc())
         # Reconnect to APNS
         connect_to_apns()
         return False
-    except:
-        app.logger.error("Fail.")
 
     # Get feedback messages
     for (token_hex, fail_time) in apns_conn.feedback_server.items():
