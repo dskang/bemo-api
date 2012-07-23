@@ -532,7 +532,7 @@ def incoming():
 @app.route('/')
 def hello():
     return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' +
-           'font-weight: 100; text-align: center; margin: 20px 0;">Lumo</div>')
+           'font-weight: 100; text-align: center; margin: 20px 0;">Bemo</div>')
 
 if __name__ == "__main__":
     # Connect to APNs
