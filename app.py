@@ -524,7 +524,8 @@ def incoming():
         else:
             return jsonify({'status': 'failure', 'error': 'waiting'})
 
-    except KeyError: pass
+    except KeyError:
+        pass
     return jsonify({'status': 'failure', 'error': 'invalid'})
 
 @app.route('/')
