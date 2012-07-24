@@ -530,7 +530,6 @@ def incoming():
 
 @app.route('/')
 def hello():
-    raise Exception('Sentry test')
     return('<div style="font: 36px Helvetica Neue, Helvetica, Arial;' +
            'font-weight: 100; text-align: center; margin: 20px 0;">Bemo</div>')
 
