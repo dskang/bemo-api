@@ -553,12 +553,21 @@ def connect_to_db():
     connection.register([User, Call, Location])
     database = connection[DATABASE_NAME]
 
+def start_sentry():
+    """Start Sentry"""
+    global sentry
+
+    from raven.contrib.flask import Sentry
+    sentry = Sentry(app)
+
 def start_server():
     """Start the server"""
     port = int(os.environ.get("PORT", 5000))
     if port == 5000:
         app.run(debug=True)
     else:
+        start_sentry()
+
         # Use Tornado in production
         from tornado.wsgi import WSGIContainer
         from tornado.httpserver import HTTPServer
