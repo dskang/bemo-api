@@ -1,8 +1,10 @@
+import os, urlparse, json, time, md5
+
+import requests
 from flask import Flask, request, jsonify
 from mongokit import Connection
 from bson import objectid, errors
 from apns import APNs, Payload, PayloadAlert
-import os, requests, urlparse, json, time, md5, sys, traceback
 
 from models import User, Call, Location
 
