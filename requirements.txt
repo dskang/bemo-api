@@ -5,5 +5,5 @@ requests==0.13.3
 tornado==2.3
 
 # Sentry
-raven=2.0.3
-blinker=1.2
+raven==2.0.3
+blinker==1.2
