@@ -16,8 +16,8 @@ STAGING = 'staging'
 PRODUCTION = 'production'
 
 CALL_RINGTIME_THRESHOLD = 5 * 60 # number of seconds until unreceived call expires
-CALL_POLL_THRESHOLD = 30 # number of seconds for which no polling results in disconnection
-LOC_TIME_THRESHOLD = 60 # number of seconds until location expires
+CALL_POLL_THRESHOLD = 30 * 60 # number of seconds for which no polling results in disconnection
+LOC_TIME_THRESHOLD = 60 * 60 * 60 # number of seconds until location expires
 
 FB_SERVICE_ID = 'facebook'
 
