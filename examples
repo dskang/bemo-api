@@ -12,16 +12,19 @@ connection['admin'].authenticate(USER, PASSWORD)
 APNS_TOKEN = "d8cddf13e61d4569348e7dbffc2d7a469c2a957c209c4ebd4be9ae387cd2c88c"
 
 # Login
-curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "device_id":"abc", "device_token":"123", "service_token":"AAACEdEose0cBAIBIQZB2jWVziqLl3hItP3eJP23fE2DmbP1QVxtkTfrA6QZBFQVJrLcvN1fK8deLOhLSaiJIpEZCknq6iC0lXauMSSC6OfzodjrJdSe"}' http://localhost:5000/login
+curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iPhone", "service":"facebook", "device_id":"abc", "device_token":"123", "service_token":"AAACEdEose0cBAIBIQZB2jWVziqLl3hItP3eJP23fE2DmbP1QVxtkTfrA6QZBFQVJrLcvN1fK8deLOhLSaiJIpEZCknq6iC0lXauMSSC6OfzodjrJdSe"}' http://localhost:5000/login
 
 # Discover friends
 curl -v http://localhost:5000/friends?token=b113b00be612ded083e8c0a42729c141
 
 # Initiate call
-curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "service":"facebook", "token":"d5218d69639b3b70540394c68adb5efd"}' http://localhost:5000/call/5008a196c35719000200000c/init
+curl -v -H "Content-Type: application/json" -X POST -d '{"service":"facebook", "token":"d5218d69639b3b70540394c68adb5efd"}' http://localhost:5000/call/5008a196c35719000200000c/init
+
+# Bieber calling me
+curl -v -H "Content-Type: application/json" -X POST -d '{"service":"facebook", "token":"5566464b5c68137362009f1c740eeb51"}' http://localhost:5000/call/5008a196c35719000200000c/init
 
 # Receive call
-curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iphone", "token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/receive
+curl -v -H "Content-Type: application/json" -X POST -d '{"token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/receive
 
 # End call
 curl -v -H "Content-Type: application/json" -X POST -d '{"token":"b113b00be612ded083e8c0a42729c141"}' http://localhost:5000/call/4fb01e09a486bd0007000032/end
