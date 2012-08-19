@@ -1,4 +1,6 @@
 from gevent import monkey; monkey.patch_all()
+
+import gevent
 import os, urlparse, json, time, md5
 
 import requests
@@ -297,7 +299,9 @@ def call_init(target_id):
         for device in target.devices:
             device_token = device['token']
             push_success = notify_by_push(INCOMING_CALL, source_service, str(source._id), device_token) or push_success
-            # TODO: Send multiple notifications
+            # Send multiple notifications
+            gevent.spawn_later(5, notify_by_push, None, source_service, str(source._id), device_token)
+            gevent.spawn_later(10, notify_by_push, None, source_service, str(source._id), device_token)
 
         # Return invalid if unable to notify any of target's devices
         if not push_success:
