@@ -12,7 +12,7 @@ connection['admin'].authenticate(USER, PASSWORD)
 APNS_TOKEN = "d8cddf13e61d4569348e7dbffc2d7a469c2a957c209c4ebd4be9ae387cd2c88c"
 
 # Login
-curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iPhone", "service":"facebook", "device_id":"abc", "device_token":"123", "service_token":"AAACEdEose0cBAIBIQZB2jWVziqLl3hItP3eJP23fE2DmbP1QVxtkTfrA6QZBFQVJrLcvN1fK8deLOhLSaiJIpEZCknq6iC0lXauMSSC6OfzodjrJdSe"}' http://localhost:5000/login
+curl -v -H "Content-Type: application/json" -X POST -d '{"device":"iPhone", "service":"facebook", "device_id":"abc", "device_token":"123", "service_token":"BAADw0pM2hugBAGfGZCShBfRpZBqmLirLRg0TGuakOiH6WJY5PN62ZBRdHhQapOnuZC1YVcOkEJixDYXLIYgmRgyZAq1uIzHUBVDT96txdxRuGg9AkrjYFoyCrq611wv8ZD"}' http://localhost:5000/login
 
 # Discover friends
 curl -v http://localhost:5000/friends?token=b113b00be612ded083e8c0a42729c141
