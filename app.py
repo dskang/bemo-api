@@ -1,3 +1,4 @@
+from gevent import monkey; monkey.patch_all()
 import os, urlparse, json, time, md5
 
 import requests
@@ -569,18 +570,9 @@ def start_server():
     else:
         start_sentry()
 
-        # Use Tornado in production
-        from tornado.wsgi import WSGIContainer
-        from tornado.httpserver import HTTPServer
-        from tornado.ioloop import IOLoop
-        import tornado.options
-
-        # Parse command line options
-        tornado.options.parse_command_line()
-        # Start the server
-        http_server = HTTPServer(WSGIContainer(app))
-        http_server.listen(port)
-        IOLoop.instance().start()
+        from gevent.pywsgi import WSGIServer
+        http_server = WSGIServer(('', port), app)
+        http_server.serve_forever()
 
 if __name__ == "__main__":
     connect_to_apns()
