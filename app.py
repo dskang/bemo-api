@@ -166,7 +166,8 @@ def login():
             results = json.loads(r.text)
             service['username'] = unicode(results['name'])
             service['id'] = unicode(results['id'])
-        else: raise KeyError
+        else:
+            raise KeyError
 
         # Search for user in database by device
         user_by_device = database.users.User.find_one({
